@@ -38,7 +38,9 @@
         </el-table-column>
         <el-table-column prop="action"      label="操作内容" min-width="200" show-overflow-tooltip />
         <el-table-column prop="ip"          label="IP"      width="140" />
-        <el-table-column prop="createdAt"   label="时间"    width="180" />
+        <el-table-column prop="createdAt" label="时间" width="180">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
       </el-table>
       <el-pagination
         v-model:current-page="query.page"
@@ -55,6 +57,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getOpLogs } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading = ref(false)
 const list    = ref([])

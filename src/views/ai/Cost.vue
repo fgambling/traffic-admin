@@ -44,7 +44,9 @@
               <span>{{ ['—','👍','👎'][row.feedback ?? 0] }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="createdAt"  label="生成时间" width="180" />
+          <el-table-column prop="createdAt" label="生成时间" width="180">
+            <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+          </el-table-column>
         </el-table>
         <el-pagination
           v-model:current-page="page"
@@ -78,6 +80,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getAiCost, getAiCostByMerchant } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading        = ref(false)
 const loadingMerchant = ref(false)

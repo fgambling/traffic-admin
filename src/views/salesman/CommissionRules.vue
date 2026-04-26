@@ -22,7 +22,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" label="说明" min-width="200" />
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
+        <el-table-column prop="updatedAt" label="更新时间" width="180">
+          <template #default="{ row }">{{ fmtDate(row.updatedAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="130" align="center" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -71,6 +73,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCommissionRules, saveCommissionRule, deleteCommissionRule } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading    = ref(false)
 const rules      = ref([])

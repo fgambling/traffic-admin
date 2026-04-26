@@ -39,6 +39,9 @@
         <el-table-column prop="balance" label="可提现余额" width="130" align="right">
           <template #default="{ row }">¥{{ Number(row.balance || 0).toFixed(2) }}</template>
         </el-table-column>
+        <el-table-column prop="withdrawnAmount" label="已提现金额" width="130" align="right">
+          <template #default="{ row }">¥{{ Number(row.withdrawnAmount || 0).toFixed(2) }}</template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="90" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
@@ -46,7 +49,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" min-width="160" />
+        <el-table-column prop="createdAt" label="创建时间" min-width="160">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -107,6 +112,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getSalesmanList, addSalesman, updateSalesman, toggleSalesman, batchImportSalesmen } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading   = ref(false)
 const list      = ref([])

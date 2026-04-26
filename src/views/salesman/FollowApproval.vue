@@ -37,10 +37,13 @@
         <el-table-column prop="contactPerson" label="联系人"   width="100" />
         <el-table-column prop="contactPhone"  label="联系电话" width="135" />
         <el-table-column prop="address"       label="地址"     min-width="160" show-overflow-tooltip />
-        <el-table-column prop="status"        label="状态"     width="100" align="center">
+        <el-table-column label="状态" width="150" align="center">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.status).type" size="small">
               {{ statusTag(row.status).label }}
+            </el-tag>
+            <el-tag v-if="row.coFollowCount > 0" class="tag-joint" size="small" style="margin-left:4px;">
+              联合跟进
             </el-tag>
           </template>
         </el-table-column>
@@ -87,16 +90,26 @@
             <el-tag :type="statusTag(currentRow.status).type" size="small">
               {{ statusTag(currentRow.status).label }}
             </el-tag>
+            <el-tag v-if="currentRow.coFollowCount > 0" class="tag-joint" size="small" style="margin-left:6px;">
+              联合跟进
+            </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ fmtDate(currentRow.updatedAt) }}</el-descriptions-item>
+          <el-descriptions-item v-if="currentRow.coFollowCount > 0" label="共同跟进业务员" :span="2">
+            {{ currentRow.coSalesmanNames }}
+          </el-descriptions-item>
         </el-descriptions>
 
-        <!-- 合作信息（金额 + 凭证） -->
-        <div v-if="currentRow.commission || currentRow.voucherUrl" class="cooperation-section">
+        <!-- 合作信息（金额 + 凭证 + 备注） -->
+        <div v-if="currentRow.commission || currentRow.voucherUrl || currentRow.followRecord" class="cooperation-section">
           <div class="section-title">合作信息</div>
           <div class="info-row" v-if="currentRow.commission">
             <span class="info-label">合作金额</span>
             <span class="info-val amount">¥{{ Number(currentRow.commission).toFixed(2) }}</span>
+          </div>
+          <div class="info-row" v-if="currentRow.followRecord">
+            <span class="info-label">备注</span>
+            <span class="info-val">{{ currentRow.followRecord }}</span>
           </div>
           <div class="info-row" v-if="currentRow.voucherUrl">
             <span class="info-label">合作凭证</span>
@@ -197,7 +210,9 @@ function statusTag(s) {
 
 function fmtDate(dt) {
   if (!dt) return '--'
-  return new Date(dt).toLocaleString('zh-CN', { hour12: false }).slice(0, 16)
+  const d = new Date(dt)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 async function load(page) {
@@ -384,5 +399,11 @@ onMounted(load)
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+:deep(.tag-joint) {
+  background-color: #f3e5f5;
+  border-color: #ce93d8;
+  color: #6a1b9a;
 }
 </style>

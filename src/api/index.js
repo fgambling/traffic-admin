@@ -30,10 +30,11 @@ export const toggleSalesman     = (id, status)  => http.put(`/api/admin/salesmen
 export const batchImportSalesmen = rows         => http.post('/api/admin/salesmen/batch-import', rows)
 
 // ── 跟进管理 ──────────────────────────────────────────────────
-export const getFollowList      = params       => http.get('/api/admin/follow/list', { params })
-export const getFollowRecords   = id           => http.get(`/api/admin/follow/${id}/records`)
-export const approveFollow      = (id, data)   => http.post(`/api/admin/follow/${id}/approve`, data ?? {})
-export const rejectFollow       = (id, reason) => http.post(`/api/admin/follow/${id}/reject`, { reason })
+export const getFollowList        = params       => http.get('/api/admin/follow/list', { params })
+export const getFollowRecords     = id           => http.get(`/api/admin/follow/${id}/records`)
+export const approveFollow        = (id, data)   => http.post(`/api/admin/follow/${id}/approve`, data ?? {})
+export const rejectFollow         = (id, reason) => http.post(`/api/admin/follow/${id}/reject`, { reason })
+export const getMerchantFollowers = merchantId   => http.get(`/api/admin/merchant/${merchantId}/followers`)
 
 // ── 佣金规则 ──────────────────────────────────────────────────
 export const getCommissionRules = ()      => http.get('/api/admin/commission-rules')

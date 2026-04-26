@@ -88,9 +88,10 @@
             <el-table-column prop="contact_person" label="联系人"   width="100" />
             <el-table-column prop="contact_phone"  label="联系电话" width="135" />
             <el-table-column prop="address"        label="地址"     min-width="160" show-overflow-tooltip />
-            <el-table-column prop="commission"     label="合作金额" width="150" align="right">
+            <el-table-column label="合作金额" width="150" align="right">
               <template #default="{ row }">
                 ¥{{ Number(row.commission || 0).toFixed(2) }}
+                <el-tag v-if="row.co_follow_count > 0" size="small" class="tag-joint" style="margin-left:4px;">联合</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="updated_at" label="申请时间" width="155">
@@ -163,12 +164,19 @@
     >
       <template v-if="approvalRow">
         <el-descriptions :column="2" border size="small" style="margin-bottom:16px;">
-          <el-descriptions-item label="商家名称" :span="2">{{ approvalRow.merchant_name }}</el-descriptions-item>
+          <el-descriptions-item label="商家名称" :span="2">
+            {{ approvalRow.merchant_name }}
+            <el-tag v-if="approvalRow.co_follow_count > 0" size="small" class="tag-joint" style="margin-left:6px;">联合跟进</el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="联系人">{{ approvalRow.contact_person || '--' }}</el-descriptions-item>
           <el-descriptions-item label="联系电话">{{ approvalRow.contact_phone || '--' }}</el-descriptions-item>
           <el-descriptions-item label="地址" :span="2">{{ approvalRow.address || '--' }}</el-descriptions-item>
-          <el-descriptions-item label="业务员">{{ approvalRow.salesman_name }}</el-descriptions-item>
-          <el-descriptions-item label="业务员电话">{{ approvalRow.salesman_phone }}</el-descriptions-item>
+          <el-descriptions-item label="业务员">
+            <div v-for="(s, i) in coFollowers" :key="i">{{ s.name }}</div>
+          </el-descriptions-item>
+          <el-descriptions-item label="业务员电话">
+            <div v-for="(s, i) in coFollowers" :key="i">{{ s.phone }}</div>
+          </el-descriptions-item>
           <el-descriptions-item label="申请时间" :span="2">{{ fmtDate(approvalRow.updated_at) }}</el-descriptions-item>
         </el-descriptions>
 
@@ -306,7 +314,7 @@ import { Loading } from '@element-plus/icons-vue'
 import {
   getMerchantList, toggleMerchant, updateMerchant,
   getFollowList, getFollowRecords, approveFollow, rejectFollow,
-  getCommissionRules
+  getCommissionRules, getMerchantFollowers
 } from '../../api'
 
 // ── 当前 tab ──────────────────────────────────────────────────
@@ -429,6 +437,7 @@ async function loadPending(page) {
 const approvalVisible       = ref(false)
 const approvalRow           = ref(null)
 const approvalRecords       = ref([])
+const coFollowers           = ref([])
 const recordsLoading        = ref(false)
 const approving             = ref(false)
 const rejecting             = ref(false)
@@ -460,21 +469,26 @@ async function openApproval(row) {
   customAmountError.value    = ''
   approvalVisible.value      = true
 
-  // Load rules and records in parallel
-  const [, records] = await Promise.allSettled([
+  coFollowers.value = []
+  // Load rules, records and co-followers in parallel
+  await Promise.allSettled([
     getCommissionRules().then(r => { commissionRules.value = r || [] }),
     (async () => {
       recordsLoading.value = true
       try { approvalRecords.value = await getFollowRecords(row.id) }
       catch (_) { approvalRecords.value = [] }
       finally { recordsLoading.value = false }
-    })()
+    })(),
+    getMerchantFollowers(row.merchant_id)
+      .then(r => { coFollowers.value = r || [] })
+      .catch(() => {})
   ])
 }
 
 function resetApproval() {
   approvalRow.value          = null
   approvalRecords.value      = []
+  coFollowers.value          = []
   showRejectInput.value      = false
   rejectReason.value         = ''
   showApproveStep.value      = false
@@ -669,4 +683,11 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 12px;
 }
+
+:deep(.tag-joint) {
+  background-color: #f3e5f5;
+  border-color: #ce93d8;
+  color: #6a1b9a;
+}
+
 </style>

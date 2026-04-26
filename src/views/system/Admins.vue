@@ -9,7 +9,9 @@
         <el-table-column prop="id"        label="ID"   width="80" align="center" />
         <el-table-column prop="username"  label="账号" min-width="180" />
         <el-table-column prop="name"      label="姓名" width="140" />
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column prop="createdAt" label="创建时间" width="180">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="120" align="center">
           <template #default="{ row }">
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -38,6 +40,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { getAdminList } from '../../api'
+import { fmtDate } from '../../utils/format'
 import http from '../../utils/request'
 
 const loading       = ref(false)

@@ -58,7 +58,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="adminNote"   label="管理员备注" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="createdAt"   label="生成时间"   width="180" />
+        <el-table-column prop="createdAt" label="生成时间" width="180">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="160" align="center" fixed="right">
           <template #default="{ row }">
             <el-button link type="success" @click="openReview(row, 1)">采纳</el-button>
@@ -91,6 +93,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getAiAdviceList, reviewAiAdvice } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading    = ref(false)
 const list       = ref([])

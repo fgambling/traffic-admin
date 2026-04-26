@@ -64,7 +64,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="时间" width="180" />
+        <el-table-column prop="createdAt" label="时间" width="180">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="140" align="center" fixed="right">
           <template #default="{ row }">
             <el-button v-if="!row.resolved" link type="success" @click="resolve(row)">标记解决</el-button>
@@ -88,6 +90,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBugLogs, resolveBug, deleteBug } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading  = ref(false)
 const list     = ref([])

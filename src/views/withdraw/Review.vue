@@ -7,6 +7,9 @@
     <!-- 搜索栏 -->
     <el-card shadow="never" style="margin-bottom:16px;">
       <el-form :model="query" inline>
+        <el-form-item label="业务员">
+          <el-input v-model="query.salesmanName" placeholder="姓名搜索" clearable style="width:140px;" />
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width:120px;">
             <el-option label="待审核" :value="0" />
@@ -44,7 +47,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="remark"       label="备注"    min-width="120" />
-        <el-table-column prop="createdAt"    label="申请时间" width="180" />
+        <el-table-column prop="createdAt" label="申请时间" width="180">
+          <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="160" align="center" fixed="right">
           <template #default="{ row }">
             <template v-if="row.status === 0">
@@ -80,11 +85,12 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWithdrawList, approveWithdraw, rejectWithdraw } from '../../api'
+import { fmtDate } from '../../utils/format'
 
 const loading    = ref(false)
 const list       = ref([])
 const total      = ref(0)
-const query      = reactive({ status: null, page: 1, size: 15 })
+const query      = reactive({ salesmanName: '', status: null, page: 1, size: 15 })
 const showReject = ref(false)
 const rejectRemark = ref('')
 const submitting = ref(false)
@@ -94,7 +100,12 @@ async function load(page) {
   if (page) query.page = page
   loading.value = true
   try {
-    const data = await getWithdrawList(query)
+    const data = await getWithdrawList({
+      salesmanName: query.salesmanName || undefined,
+      status:       query.status ?? undefined,
+      page:         query.page,
+      size:         query.size
+    })
     list.value  = data.list || []
     total.value = data.total || 0
   } catch (_) {
@@ -104,7 +115,7 @@ async function load(page) {
 }
 
 function resetQuery() {
-  Object.assign(query, { status: null, page: 1 })
+  Object.assign(query, { salesmanName: '', status: null, page: 1 })
   load()
 }
 
