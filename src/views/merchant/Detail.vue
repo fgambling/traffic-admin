@@ -24,7 +24,7 @@
             <el-descriptions-item label="状态">
               <el-tag :type="statusTag(detail.status).type" size="small">{{ statusTag(detail.status).label }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="注册时间">{{ detail.createdAt }}</el-descriptions-item>
+            <el-descriptions-item label="注册时间">{{ fmtDate(detail.createdAt) }}</el-descriptions-item>
           </el-descriptions>
           <div style="margin-top:16px;display:flex;gap:8px;">
             <el-button type="primary" @click="editVisible = true">编辑信息</el-button>
@@ -98,6 +98,14 @@
                         {{ rec.type === 'status' ? '状态' : '记录' }}
                       </el-tag>
                       <span class="rec-content">{{ rec.content }}</span>
+                      <el-image
+                        v-if="rec.imageUrl"
+                        :src="rec.imageUrl"
+                        :preview-src-list="[rec.imageUrl]"
+                        class="rec-image"
+                        fit="cover"
+                        preview-teleported
+                      />
                       <div class="rec-time">{{ fmtDate(rec.createdAt) }}</div>
                     </div>
                   </div>
@@ -321,6 +329,16 @@ onMounted(load)
   line-height: 1.6;
   white-space: pre-line;
   vertical-align: middle;
+}
+
+.rec-image {
+  display: block;
+  width: 120px;
+  height: 90px;
+  border-radius: 6px;
+  margin-top: 8px;
+  cursor: pointer;
+  border: 1px solid #ebeef5;
 }
 
 .rec-time {

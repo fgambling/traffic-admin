@@ -1,5 +1,73 @@
-# Vue 3 + Vite
+# traffic-admin — 后台管理系统
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3 + Vite + Element Plus
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+---
+
+## 一、环境要求
+
+| 工具 | 版本要求 |
+|------|---------|
+| Node.js | 18+ |
+| npm / pnpm | 任意 |
+
+---
+
+## 二、配置后端地址
+
+打开文件 `src/utils/request.js`，将 `baseURL` 改成运行后端服务的机器 IP：
+
+```js
+const http = axios.create({
+  baseURL: 'http://192.168.x.x:8080',  // ← 改成后端服务器的 IP 和端口
+  timeout: 15000
+})
+```
+
+> 如果后端和前端**在同一台电脑**上运行，保持 `http://localhost:8080` 不变即可。
+> 如果后端跑在别的机器上，改成对应的局域网 IP。
+
+---
+
+## 三、安装依赖 & 启动
+
+```bash
+# 安装依赖（只需第一次）
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+启动后访问：`http://localhost:5173`
+
+---
+
+## 四、登录账号
+
+| 账号 | 密码 |
+|------|------|
+| admin | admin123 |
+
+---
+
+## 五、功能模块
+
+| 模块 | 说明 |
+|------|------|
+| 商家管理 | 查看/编辑商家信息、审批注册、启用/禁用账号、查看今日数据 |
+| 业务员管理 | 查看业务员列表、跟进详情、审批提现申请、设置合作佣金 |
+| 系统日志 | 查看操作记录 |
+
+---
+
+## 六、常见问题
+
+**Q：页面显示正常但数据加载失败 / 出现 401**
+A：检查 `baseURL` 是否指向正在运行的后端，并确认后端已正常启动。
+
+**Q：登录提示用户名或密码错误**
+A：确认使用 `admin` / `admin123`，注意区分大小写。
+
+**Q：跨域报错（CORS）**
+A：后端已配置跨域，通常是 `baseURL` 填写有问题（检查 IP、端口、是否有多余斜杠）。
