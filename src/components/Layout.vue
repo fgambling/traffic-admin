@@ -34,13 +34,12 @@
           <el-icon><Money /></el-icon><template #title>提现审核</template>
         </el-menu-item>
 
-        <!-- AI 管理 -->
+        <!-- 建议管理 -->
         <el-sub-menu index="/ai">
           <template #title>
-            <el-icon><MagicStick /></el-icon><span>AI 管理</span>
+            <el-icon><MagicStick /></el-icon><span>建议管理</span>
           </template>
-          <el-menu-item index="/ai/config">模型配置</el-menu-item>
-          <el-menu-item index="/ai/rules">规则配置</el-menu-item>
+          <el-menu-item index="/ai/manage">套餐配置</el-menu-item>
           <el-menu-item index="/ai/advice">建议审核</el-menu-item>
           <el-menu-item index="/ai/cost">费用统计</el-menu-item>
         </el-sub-menu>

@@ -54,6 +54,7 @@ export const getAiCost          = params  => http.get('/api/admin/ai/cost', { pa
 export const getAiCostByMerchant = ()     => http.get('/api/admin/ai/cost/by-merchant')
 export const getAiConfig        = ()      => http.get('/api/admin/ai/config')
 export const saveAiConfig       = data    => http.post('/api/admin/ai/config', data)
+export const testAiConnection   = data    => http.post('/api/admin/ai/config/test', data)
 export const getAiAdviceList    = params  => http.get('/api/admin/ai/advice', { params })
 export const reviewAiAdvice     = (id, data) => http.put(`/api/admin/ai/advice/${id}/review`, data)
 

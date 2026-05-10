@@ -17,8 +17,8 @@
             <el-descriptions-item label="联系电话">{{ detail.contactPhone }}</el-descriptions-item>
             <el-descriptions-item label="地址">{{ detail.address || '--' }}</el-descriptions-item>
             <el-descriptions-item label="套餐">
-              <el-tag :type="detail.packageType === 2 ? 'primary' : 'info'" size="small">
-                {{ detail.packageType === 2 ? '高级版' : '基础版' }}
+              <el-tag :type="pkgTag(detail.packageType).type" size="small">
+                {{ pkgTag(detail.packageType).label }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="状态">
@@ -128,6 +128,16 @@
         </el-form-item>
         <el-form-item label="地址">    <el-input v-model="editForm.address" /></el-form-item>
         <el-form-item label="营业执照"><el-input v-model="editForm.licenseNo" /></el-form-item>
+        <el-form-item label="套餐类型">
+          <el-select v-model="editForm.packageType" style="width:100%">
+            <el-option :value="1" label="普通版" />
+            <el-option :value="2" label="中级版" />
+            <el-option :value="3" label="高级版" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="重置密码">
+          <el-input v-model="editForm.password" placeholder="留空则不修改" show-password />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取消</el-button>
@@ -196,6 +206,7 @@ function fmtDate(dt) {
 
 // ── 基础信息 ────────────────────────────────────────────────
 const statusTag = s => ({ 0: { type: 'warning', label: '待激活' }, 1: { type: 'success', label: '正常' }, 2: { type: 'danger', label: '禁用' } }[s] || { type: 'info', label: '未知' })
+const pkgTag    = p => ({ 1: { type: 'info', label: '普通版' }, 2: { type: 'warning', label: '中级版' }, 3: { type: 'danger', label: '高级版' } }[p] || { type: 'info', label: '未知' })
 
 const snapCards = computed(() => {
   const d = detail.value.todaySnapshot || {}
@@ -212,7 +223,7 @@ async function load() {
   try {
     const data = await getMerchantDetail(id)
     detail.value = data
-    Object.assign(editForm, { name: data.name, contactPerson: data.contactPerson, contactPhone: data.contactPhone, address: data.address, licenseNo: data.licenseNo })
+    Object.assign(editForm, { name: data.name, contactPerson: data.contactPerson, contactPhone: data.contactPhone, address: data.address, licenseNo: data.licenseNo, packageType: data.packageType, password: '' })
   } catch (_) {
   } finally {
     loading.value = false
