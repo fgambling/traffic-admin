@@ -23,9 +23,11 @@
 
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑管理员' : '新增管理员'" width="420px">
       <el-form :model="form" label-width="80px">
-        <el-form-item label="账号"><el-input v-model="form.username" :disabled="isEdit" /></el-form-item>
+        <el-form-item label="账号"><el-input v-model="form.username" /></el-form-item>
         <el-form-item label="姓名"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="密码" v-if="!isEdit"><el-input v-model="form.password" type="password" show-password /></el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="form.password" type="password" show-password :placeholder="isEdit ? '留空则不修改' : ''" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -70,7 +72,9 @@ function openEdit(row) {
 async function save() {
   if (!form.username) return ElMessage.warning('账号不能为空')
   if (isEdit.value) {
-    await http.put(`/api/admin/system/admins/${form.id}`, { name: form.name })
+    const body = { username: form.username, name: form.name }
+    if (form.password) body.password = form.password
+    await http.put(`/api/admin/system/admins/${form.id}`, body)
   } else {
     if (!form.password) return ElMessage.warning('密码不能为空')
     await http.post('/api/admin/system/admins', form)

@@ -56,7 +56,6 @@
               <template #default="{ row }">
                 <el-button link type="primary" @click="$router.push(`/merchant/${row.id}`)">详情</el-button>
                 <el-button link type="warning" @click="openAssignPkg(row)">分配套餐</el-button>
-                <el-button link type="info" @click="openSetPwd(row)">设置密码</el-button>
                 <el-button link :type="row.status === 1 ? 'danger' : 'success'" @click="toggleStatus(row)">
                   {{ row.status === 1 ? '禁用' : '启用' }}
                 </el-button>

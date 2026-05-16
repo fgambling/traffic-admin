@@ -24,6 +24,10 @@
                 有效期至：{{ detail.packageExpireAt }}
               </span>
             </el-descriptions-item>
+            <el-descriptions-item label="设备 BindId">
+              <span v-if="detail.bindId" style="font-family:monospace;">{{ detail.bindId }}</span>
+              <el-tag v-else type="info" size="small">未绑定</el-tag>
+            </el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="statusTag(detail.status).type" size="small">{{ statusTag(detail.status).label }}</el-tag>
             </el-descriptions-item>
@@ -134,6 +138,10 @@
         </el-form-item>
         <el-form-item label="地址">    <el-input v-model="editForm.address" /></el-form-item>
         <el-form-item label="营业执照"><el-input v-model="editForm.licenseNo" /></el-form-item>
+        <el-form-item label="设备 BindId">
+          <el-input v-model="editForm.bindId" placeholder="留空则清除绑定" />
+          <div style="font-size:12px;color:#909399;margin-top:4px;">硬件设备上报数据时携带的唯一标识，填写后设备数据才能关联到此商家</div>
+        </el-form-item>
         <el-form-item label="重置密码">
           <el-input v-model="editForm.password" placeholder="留空则不修改" show-password />
         </el-form-item>
@@ -222,7 +230,7 @@ async function load() {
   try {
     const data = await getMerchantDetail(id)
     detail.value = data
-    Object.assign(editForm, { name: data.name, contactPerson: data.contactPerson, contactPhone: data.contactPhone, address: data.address, licenseNo: data.licenseNo, password: '' })
+    Object.assign(editForm, { name: data.name, contactPerson: data.contactPerson, contactPhone: data.contactPhone, address: data.address, licenseNo: data.licenseNo, bindId: data.bindId || '', password: '' })
   } catch (_) {
   } finally {
     loading.value = false

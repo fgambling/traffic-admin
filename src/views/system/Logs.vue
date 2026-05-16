@@ -10,15 +10,11 @@
         </el-form-item>
         <el-form-item label="操作模块">
           <el-select v-model="query.module" placeholder="全部" clearable style="width:140px;">
-            <el-option label="商家管理" value="merchant" />
-            <el-option label="设备管理" value="device" />
-            <el-option label="AI配置"   value="ai" />
-            <el-option label="系统设置" value="system" />
+            <el-option label="商家管理"  value="商家管理" />
+            <el-option label="业务员管理" value="业务员管理" />
+            <el-option label="提现审核"  value="提现审核" />
+            <el-option label="ai"        value="ai" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="时间">
-          <el-date-picker v-model="query.dateRange" type="daterange" range-separator="至"
-            start-placeholder="开始" end-placeholder="结束" value-format="YYYY-MM-DD" style="width:240px;" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="load(1)">查询</el-button>
@@ -37,7 +33,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="action"      label="操作内容" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="ip"          label="IP"      width="140" />
         <el-table-column prop="createdAt" label="时间" width="180">
           <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
         </el-table-column>
@@ -62,19 +57,13 @@ import { fmtDate } from '../../utils/format'
 const loading = ref(false)
 const list    = ref([])
 const total   = ref(0)
-const query   = reactive({ operator: '', module: '', dateRange: [], page: 1, size: 20 })
+const query   = reactive({ operator: '', module: '', page: 1, size: 20 })
 
 async function load(page) {
   if (page) query.page = page
   loading.value = true
   try {
-    const params = { ...query }
-    if (query.dateRange?.length === 2) {
-      params.start = query.dateRange[0]
-      params.end   = query.dateRange[1]
-    }
-    delete params.dateRange
-    const data = await getOpLogs(params)
+    const data = await getOpLogs(query)
     list.value  = data.list || []
     total.value = data.total || 0
   } catch (_) {
@@ -84,7 +73,7 @@ async function load(page) {
 }
 
 function reset() {
-  Object.assign(query, { operator: '', module: '', dateRange: [], page: 1 })
+  Object.assign(query, { operator: '', module: '', page: 1 })
   load()
 }
 

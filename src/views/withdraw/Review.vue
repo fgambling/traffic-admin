@@ -33,12 +33,6 @@
         <el-table-column prop="amount"       label="申请金额" width="120" align="right">
           <template #default="{ row }">¥{{ Number(row.amount || 0).toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="way"          label="提现方式" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag size="small">{{ { alipay:'支付宝', wechat:'微信', bank:'银行卡' }[row.way] || row.way }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="account"      label="收款账号" min-width="160" />
         <el-table-column prop="status"       label="状态"    width="90" align="center">
           <template #default="{ row }">
             <el-tag :type="['warning','success','danger'][row.status]" size="small">
@@ -46,9 +40,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="remark"       label="备注"    min-width="120" />
         <el-table-column prop="createdAt" label="申请时间" width="180">
           <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column label="操作时间" width="180">
+          <template #default="{ row }">{{ row.updatedAt ? fmtDate(row.updatedAt) : '--' }}</template>
         </el-table-column>
         <el-table-column label="操作" width="160" align="center" fixed="right">
           <template #default="{ row }">
