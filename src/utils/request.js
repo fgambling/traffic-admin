@@ -2,8 +2,10 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../store/auth'
 
+export const BASE_URL = 'http://localhost:8080'
+
 const http = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: BASE_URL,
   timeout: 15000
 })
 

@@ -20,8 +20,8 @@
               <el-tag :type="pkgTag(detail.packageType).type" size="small">
                 {{ pkgTag(detail.packageType).label }}
               </el-tag>
-              <span v-if="detail.packageType >= 2" style="margin-left:8px;font-size:12px;color:#606266;">
-                有效期至：{{ detail.packageExpireAt || '未设置' }}
+              <span v-if="detail.packageType >= 2 && detail.packageExpireAt" style="margin-left:8px;font-size:12px;color:#606266;">
+                有效期至：{{ detail.packageExpireAt }}
               </span>
             </el-descriptions-item>
             <el-descriptions-item label="状态">

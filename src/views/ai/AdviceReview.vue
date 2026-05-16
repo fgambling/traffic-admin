@@ -41,7 +41,7 @@
         <el-table-column prop="merchantName" label="商家名称" width="140" />
         <el-table-column prop="adviceType"   label="类型"     width="85"  align="center">
           <template #default="{ row }">
-            <el-tag size="small" v-if="row.adviceType">{{ row.adviceType }}</el-tag>
+            <el-tag size="small" v-if="row.adviceType" :type="typeTag(row.adviceType)">{{ row.adviceType }}</el-tag>
             <span v-else>--</span>
           </template>
         </el-table-column>
@@ -133,6 +133,10 @@ const total         = ref(0)
 const query         = reactive({ reviewStatus: null, source: 2, adviceType: null, page: 1, size: 20 })
 const detailVisible = ref(false)
 const current       = ref(null)
+
+function typeTag(t) {
+  return { '备货': 'primary', '排班': 'success', '营销': 'warning', '服务': 'info' }[t] || ''
+}
 
 function statusTag(s) {
   return [

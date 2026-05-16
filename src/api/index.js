@@ -59,6 +59,11 @@ export const testAiConnection   = data    => http.post('/api/admin/ai/config/tes
 export const getAiAdviceList    = params  => http.get('/api/admin/ai/advice', { params })
 export const reviewAiAdvice     = (id, data) => http.put(`/api/admin/ai/advice/${id}/review`, data)
 
+// ── 套餐申请 ──────────────────────────────────────────────────
+export const getPackageApplications  = params       => http.get('/api/admin/merchants/package-applications', { params })
+export const getAppPendingCount      = ()           => http.get('/api/admin/merchants/package-applications/pending-count')
+export const reviewPackageApplication = (id, data)  => http.put(`/api/admin/merchants/package-applications/${id}/review`, data)
+
 // ── 系统设置 ──────────────────────────────────────────────────
 export const getAdminList       = ()      => http.get('/api/admin/system/admins')
 export const addAdmin           = data    => http.post('/api/admin/system/admins', data)

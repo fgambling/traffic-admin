@@ -114,7 +114,128 @@
           />
         </el-card>
       </el-tab-pane>
+      <!-- ── Tab 2：套餐申请 ── -->
+      <el-tab-pane name="applications">
+        <template #label>
+          套餐申请
+          <el-badge v-if="appPendingCount > 0" :value="appPendingCount" :max="99" style="margin-left:6px;vertical-align:middle;" />
+        </template>
+
+        <!-- 筛选 -->
+        <el-card shadow="never" style="margin-bottom:16px;">
+          <el-form inline>
+            <el-form-item label="状态">
+              <el-select v-model="appQuery.status" placeholder="全部" clearable style="width:120px;" @change="loadApplications(1)">
+                <el-option label="待处理" :value="0" />
+                <el-option label="已通过" :value="1" />
+                <el-option label="已拒绝" :value="2" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="loadApplications(1)">查询</el-button>
+              <el-button @click="() => { appQuery.status = null; loadApplications(1) }">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <el-card shadow="never">
+          <el-table :data="appList" stripe v-loading="appLoading" style="cursor:pointer;" @row-click="openAppDetail">
+            <el-table-column prop="merchantId"   label="商家ID"   width="80"  align="center" />
+            <el-table-column prop="merchantName" label="商家名称" min-width="140" />
+            <el-table-column prop="contactPhone" label="联系电话" width="140" />
+            <el-table-column label="申请套餐" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag :type="pkgTag(row.targetPkg).type" size="small">{{ pkgTag(row.targetPkg).label }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag :type="appStatusTag(row.status).type" size="small">{{ appStatusTag(row.status).label }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="申请时间" width="160">
+              <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="130" align="center" fixed="right">
+              <template #default="{ row }">
+                <template v-if="row.status === 0">
+                  <el-button link type="success" @click.stop="openAppReview(row, 1)">通过</el-button>
+                  <el-button link type="danger"  @click.stop="openAppReview(row, 2)">拒绝</el-button>
+                </template>
+                <span v-else style="color:#999;font-size:12px;">已处理</span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            v-model:current-page="appQuery.page"
+            :page-size="appQuery.size"
+            :total="appTotal"
+            layout="total, prev, pager, next"
+            style="margin-top:16px;justify-content:flex-end;"
+            @current-change="p => loadApplications(p)"
+          />
+        </el-card>
+      </el-tab-pane>
     </el-tabs>
+
+    <!-- ── 套餐申请详情弹窗 ── -->
+    <el-dialog v-model="appDetailVisible" title="申请详情" width="500px" :close-on-click-modal="true">
+      <template v-if="appDetailRow">
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="商家ID">{{ appDetailRow.merchantId }}</el-descriptions-item>
+          <el-descriptions-item label="商家名称">{{ appDetailRow.merchantName }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ appDetailRow.contactPhone }}</el-descriptions-item>
+          <el-descriptions-item label="申请套餐">
+            <el-tag :type="pkgTag(appDetailRow.targetPkg).type" size="small">{{ pkgTag(appDetailRow.targetPkg).label }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="appStatusTag(appDetailRow.status).type" size="small">{{ appStatusTag(appDetailRow.status).label }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="申请时间">{{ fmtDate(appDetailRow.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="备注" :span="2">{{ appDetailRow.remark || '--' }}</el-descriptions-item>
+          <el-descriptions-item v-if="appDetailRow.adminNote" label="管理员备注" :span="2">{{ appDetailRow.adminNote }}</el-descriptions-item>
+          <el-descriptions-item v-if="appDetailRow.imageUrl" label="凭证图片" :span="2">
+            <el-image :src="BASE_URL + appDetailRow.imageUrl"
+              :preview-src-list="[BASE_URL + appDetailRow.imageUrl]" preview-teleported
+              fit="cover" style="width:160px;height:110px;border-radius:6px;cursor:pointer;" />
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+      <template #footer>
+        <el-button @click="appDetailVisible = false">关闭</el-button>
+        <template v-if="appDetailRow?.status === 0">
+          <el-button type="danger"   @click="appDetailVisible = false; openAppReview(appDetailRow, 2)">拒绝</el-button>
+          <el-button type="success"  @click="appDetailVisible = false; openAppReview(appDetailRow, 1)">通过</el-button>
+        </template>
+      </template>
+    </el-dialog>
+
+    <!-- ── 套餐申请通过弹窗（分配套餐样式） ── -->
+    <el-dialog v-model="appReviewVisible" :title="appReviewAction === 1 ? '通过套餐申请' : '拒绝套餐申请'"
+      width="400px" :close-on-click-modal="false">
+      <template v-if="appReviewRow">
+        <el-form label-width="90px">
+          <el-form-item label="商家">
+            <span>{{ appReviewRow.merchantName }}</span>
+          </el-form-item>
+          <el-form-item label="申请套餐">
+            <el-tag :type="pkgTag(appReviewRow.targetPkg).type" size="small">{{ pkgTag(appReviewRow.targetPkg).label }}</el-tag>
+          </el-form-item>
+          <el-form-item v-if="appReviewAction === 1" label="有效期至" required>
+            <el-date-picker v-model="appExpireAt" type="date" value-format="YYYY-MM-DD"
+              placeholder="选择到期日期" style="width:200px;"
+              :disabled-date="d => d < new Date(new Date().setHours(0,0,0,0))" />
+          </el-form-item>
+        </el-form>
+      </template>
+      <template #footer>
+        <el-button @click="appReviewVisible = false">取消</el-button>
+        <el-button :type="appReviewAction === 1 ? 'primary' : 'danger'"
+          :loading="appReviewSaving" @click="confirmAppReview">
+          {{ appReviewAction === 1 ? '确认分配' : '确认拒绝' }}
+        </el-button>
+      </template>
+    </el-dialog>
 
     <!-- ── 新增商家弹窗 ── -->
     <el-dialog v-model="showCreate" title="新增商家" width="480px">
@@ -362,14 +483,17 @@ import { Loading } from '@element-plus/icons-vue'
 import {
   getMerchantList, createMerchant, toggleMerchant, updateMerchant,
   getFollowList, getFollowRecords, approveFollow, rejectFollow,
-  getCommissionRules, getMerchantFollowers
+  getCommissionRules, getMerchantFollowers,
+  getPackageApplications, reviewPackageApplication, getAppPendingCount
 } from '../../api'
+import { BASE_URL } from '../../utils/request'
 
 // ── 当前 tab ──────────────────────────────────────────────────
 const activeTab = ref('list')
 
 function onTabChange(tab) {
-  if (tab === 'pending') loadPending(1)
+  if (tab === 'pending')      loadPending(1)
+  if (tab === 'applications') loadApplications(1)
 }
 
 // ── 商家列表 ──────────────────────────────────────────────────
@@ -663,9 +787,88 @@ async function confirmReject() {
   }
 }
 
+// ── 套餐申请 ──────────────────────────────────────────────────
+const appLoading      = ref(false)
+const appList         = ref([])
+const appTotal        = ref(0)
+const appPendingCount = ref(0)
+const appQuery        = reactive({ status: null, page: 1, size: 20 })
+
+const appDetailVisible = ref(false)
+const appDetailRow     = ref(null)
+
+const appReviewVisible = ref(false)
+const appReviewRow     = ref(null)
+const appReviewAction  = ref(1)   // 1=通过 2=拒绝
+const appExpireAt      = ref('')
+const appAdminNote     = ref('')
+const appReviewSaving  = ref(false)
+
+function appStatusTag(s) {
+  return [
+    { type: 'warning', label: '待处理' },
+    { type: 'success', label: '已通过' },
+    { type: 'danger',  label: '已拒绝' },
+  ][s ?? 0] || { type: 'info', label: '未知' }
+}
+
+async function loadApplications(page) {
+  if (page) appQuery.page = page
+  appLoading.value = true
+  try {
+    const data = await getPackageApplications(appQuery)
+    appList.value  = data.list  || []
+    appTotal.value = data.total || 0
+  } catch (_) {
+  } finally {
+    appLoading.value = false
+  }
+}
+
+async function fetchAppPendingCount() {
+  try { appPendingCount.value = await getAppPendingCount() } catch (_) {}
+}
+
+function openAppDetail(row) {
+  appDetailRow.value    = row
+  appDetailVisible.value = true
+}
+
+function openAppReview(row, action) {
+  appReviewRow.value    = row
+  appReviewAction.value = action
+  appExpireAt.value     = ''
+  appAdminNote.value    = ''
+  appReviewVisible.value = true
+}
+
+async function confirmAppReview() {
+  if (appReviewAction.value === 1 && !appExpireAt.value) {
+    ElMessage.warning('请设置套餐有效期'); return
+  }
+  appReviewSaving.value = true
+  try {
+    await reviewPackageApplication(appReviewRow.value.id, {
+      status:          appReviewAction.value,
+      adminNote:       appAdminNote.value || undefined,
+      packageExpireAt: appReviewAction.value === 1 ? appExpireAt.value : undefined,
+    })
+    ElMessage.success(appReviewAction.value === 1 ? '已通过申请，套餐已升级' : '已拒绝申请')
+    appReviewVisible.value = false
+    loadApplications(1)
+    fetchAppPendingCount()
+    if (appReviewAction.value === 1) load()  // 刷新商家列表中的套餐状态
+  } catch (_) {
+    ElMessage.error('操作失败')
+  } finally {
+    appReviewSaving.value = false
+  }
+}
+
 onMounted(() => {
   load()
   loadPending()
+  fetchAppPendingCount()
 })
 </script>
 
