@@ -2,6 +2,7 @@
   <div>
     <div class="page-header">
       <h2>商家管理</h2>
+      <el-button type="primary" @click="openCreate">新增商家</el-button>
     </div>
 
     <el-tabs v-model="activeTab" @tab-change="onTabChange">
@@ -115,6 +116,42 @@
       </el-tab-pane>
     </el-tabs>
 
+    <!-- ── 新增商家弹窗 ── -->
+    <el-dialog v-model="showCreate" title="新增商家" width="480px">
+      <el-form :model="createForm" label-width="90px">
+        <el-form-item label="商家名称" required><el-input v-model="createForm.name" /></el-form-item>
+        <el-form-item label="联系人" required><el-input v-model="createForm.contactPerson" /></el-form-item>
+        <el-form-item label="联系电话" required>
+          <el-input v-model="createForm.contactPhone" />
+          <div style="font-size:12px;color:#909399;margin-top:4px;">该号码同时作为商家登录账号</div>
+        </el-form-item>
+        <el-form-item label="营业执照"><el-input v-model="createForm.licenseNo" placeholder="选填" /></el-form-item>
+        <el-form-item label="地址"><el-input v-model="createForm.address" /></el-form-item>
+        <el-form-item label="套餐类型">
+          <el-select v-model="createForm.packageType" style="width:160px;">
+            <el-option label="普通版" :value="1" />
+            <el-option label="中级版" :value="2" />
+            <el-option label="高级版" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="createForm.packageType >= 2" label="有效期至">
+          <el-date-picker
+            v-model="createForm.packageExpireAt"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择到期日期"
+            style="width:200px;"
+            :disabled-date="d => d < new Date(new Date().setHours(0,0,0,0))"
+          />
+        </el-form-item>
+        <el-form-item label="登录密码"><el-input v-model="createForm.password" type="password" show-password placeholder="留空默认 123456" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreate = false">取消</el-button>
+        <el-button type="primary" @click="confirmCreate" :loading="createSaving">确认添加</el-button>
+      </template>
+    </el-dialog>
+
     <!-- ── 设置密码弹窗 ── -->
     <el-dialog v-model="showPwd" title="设置登录密码" width="380px">
       <el-form label-width="80px">
@@ -132,8 +169,8 @@
     </el-dialog>
 
     <!-- ── 分配套餐弹窗 ── -->
-    <el-dialog v-model="showPkg" title="分配套餐" width="380px">
-      <el-form label-width="80px">
+    <el-dialog v-model="showPkg" title="分配套餐" width="400px">
+      <el-form label-width="90px">
         <el-form-item label="商家">
           <span>{{ pkgRow?.name }}</span>
         </el-form-item>
@@ -146,6 +183,17 @@
             <el-option label="中级版" :value="2" />
             <el-option label="高级版" :value="3" />
           </el-select>
+        </el-form-item>
+        <el-form-item v-if="pkgTarget >= 2" label="有效期至">
+          <el-date-picker
+            v-model="pkgExpireAt"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择到期日期"
+            style="width:200px;"
+            :disabled-date="d => d < new Date(new Date().setHours(0,0,0,0))"
+            @change="onExpireChange"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -312,7 +360,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import {
-  getMerchantList, toggleMerchant, updateMerchant,
+  getMerchantList, createMerchant, toggleMerchant, updateMerchant,
   getFollowList, getFollowRecords, approveFollow, rejectFollow,
   getCommissionRules, getMerchantFollowers
 } from '../../api'
@@ -329,6 +377,42 @@ const loading = ref(false)
 const list    = ref([])
 const total   = ref(0)
 const query   = reactive({ name: '', status: null, packageType: null, page: 1, size: 15 })
+
+const showCreate  = ref(false)
+const createSaving = ref(false)
+const createForm  = reactive({ name: '', licenseNo: '', contactPerson: '', contactPhone: '', address: '', packageType: 1, packageExpireAt: '', password: '' })
+
+function openCreate() {
+  Object.assign(createForm, { name: '', licenseNo: '', contactPerson: '', contactPhone: '', address: '', packageType: 1, packageExpireAt: '', password: '' })
+  showCreate.value = true
+}
+
+async function confirmCreate() {
+  if (!createForm.name.trim())          { ElMessage.warning('请填写商家名称'); return }
+  if (!createForm.contactPerson.trim()) { ElMessage.warning('请填写联系人'); return }
+  if (!createForm.contactPhone.trim())  { ElMessage.warning('请填写联系电话'); return }
+  if (createForm.packageType >= 2 && !createForm.packageExpireAt) { ElMessage.warning('请设置套餐有效期'); return }
+  createSaving.value = true
+  try {
+    await createMerchant({
+      name:            createForm.name.trim(),
+      licenseNo:       createForm.licenseNo.trim(),
+      contactPerson:   createForm.contactPerson,
+      contactPhone:    createForm.contactPhone,
+      address:         createForm.address,
+      packageType:     createForm.packageType,
+      packageExpireAt: createForm.packageType >= 2 ? createForm.packageExpireAt : null,
+      password:        createForm.password || undefined,
+    })
+    ElMessage.success('商家已添加')
+    showCreate.value = false
+    load()
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || '添加失败')
+  } finally {
+    createSaving.value = false
+  }
+}
 
 const showPwd     = ref(false)
 const pwdRow      = ref(null)
@@ -355,10 +439,11 @@ async function confirmSetPwd() {
   }
 }
 
-const showPkg   = ref(false)
-const pkgRow    = ref(null)
-const pkgTarget = ref(1)
-const pkgSaving = ref(false)
+const showPkg     = ref(false)
+const pkgRow      = ref(null)
+const pkgTarget   = ref(1)
+const pkgExpireAt = ref('')
+const pkgSaving   = ref(false)
 
 function statusTag(s) {
   return { 0: { type: 'warning', label: '待激活' }, 1: { type: 'success', label: '正常' }, 2: { type: 'danger', label: '禁用' } }[s] || { type: 'info', label: '未知' }
@@ -368,16 +453,33 @@ function pkgTag(p) {
   return { 1: { type: 'info', label: '普通版' }, 2: { type: 'primary', label: '中级版' }, 3: { type: 'warning', label: '高级版' } }[p] || { type: 'info', label: '普通版' }
 }
 
+function onExpireChange(val) {
+  if (!val) return
+  const today = new Date(new Date().setHours(0, 0, 0, 0))
+  if (new Date(val) < today) {
+    ElMessage.warning('有效期不能早于今天')
+    pkgExpireAt.value = ''
+  }
+}
+
 function openAssignPkg(row) {
-  pkgRow.value    = row
-  pkgTarget.value = row.packageType || 1
-  showPkg.value   = true
+  pkgRow.value      = row
+  pkgTarget.value   = row.packageType || 1
+  pkgExpireAt.value = row.packageExpireAt || ''
+  showPkg.value     = true
 }
 
 async function confirmAssignPkg() {
+  if (pkgTarget.value >= 2 && !pkgExpireAt.value) {
+    ElMessage.warning('请设置套餐有效期')
+    return
+  }
   pkgSaving.value = true
   try {
-    await updateMerchant(pkgRow.value.id, { packageType: pkgTarget.value })
+    await updateMerchant(pkgRow.value.id, {
+      packageType:     pkgTarget.value,
+      packageExpireAt: pkgTarget.value >= 2 ? pkgExpireAt.value : null,
+    })
     ElMessage.success('套餐已更新')
     showPkg.value = false
     load()

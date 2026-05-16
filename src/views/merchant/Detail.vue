@@ -20,6 +20,9 @@
               <el-tag :type="pkgTag(detail.packageType).type" size="small">
                 {{ pkgTag(detail.packageType).label }}
               </el-tag>
+              <span v-if="detail.packageType >= 2" style="margin-left:8px;font-size:12px;color:#606266;">
+                有效期至：{{ detail.packageExpireAt || '未设置' }}
+              </span>
             </el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="statusTag(detail.status).type" size="small">{{ statusTag(detail.status).label }}</el-tag>
@@ -63,7 +66,10 @@
             <el-icon class="is-loading" :size="24"><Loading /></el-icon>
           </div>
 
-          <div v-else-if="follows.length === 0" style="color:#999;padding:16px 20px;">暂无业务员跟进记录</div>
+          <div v-else-if="follows.length === 0" style="padding:16px 20px;display:flex;align-items:center;gap:8px;">
+            <el-tag type="info" size="small">管理员直接添加</el-tag>
+            <span style="color:#999;font-size:13px;">该商家由管理员手动创建，无业务员跟进记录</span>
+          </div>
 
           <div v-else class="follow-list">
             <div v-for="f in follows" :key="f.followId" class="follow-block">
@@ -128,13 +134,6 @@
         </el-form-item>
         <el-form-item label="地址">    <el-input v-model="editForm.address" /></el-form-item>
         <el-form-item label="营业执照"><el-input v-model="editForm.licenseNo" /></el-form-item>
-        <el-form-item label="套餐类型">
-          <el-select v-model="editForm.packageType" style="width:100%">
-            <el-option :value="1" label="普通版" />
-            <el-option :value="2" label="中级版" />
-            <el-option :value="3" label="高级版" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="重置密码">
           <el-input v-model="editForm.password" placeholder="留空则不修改" show-password />
         </el-form-item>
@@ -223,7 +222,7 @@ async function load() {
   try {
     const data = await getMerchantDetail(id)
     detail.value = data
-    Object.assign(editForm, { name: data.name, contactPerson: data.contactPerson, contactPhone: data.contactPhone, address: data.address, licenseNo: data.licenseNo, packageType: data.packageType, password: '' })
+    Object.assign(editForm, { name: data.name, contactPerson: data.contactPerson, contactPhone: data.contactPhone, address: data.address, licenseNo: data.licenseNo, password: '' })
   } catch (_) {
   } finally {
     loading.value = false

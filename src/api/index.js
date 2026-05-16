@@ -5,6 +5,7 @@ export const login = data => http.post('/api/admin/login', data)
 
 // ── 商家管理 ──────────────────────────────────────────────────
 export const getMerchantList    = params        => http.get('/api/admin/merchants', { params })
+export const createMerchant     = data          => http.post('/api/admin/merchants', data)
 export const getMerchantDetail  = id            => http.get(`/api/admin/merchants/${id}`)
 export const updateMerchant     = (id, data)    => http.put(`/api/admin/merchants/${id}`, data)
 export const toggleMerchant     = (id, status)  => http.put(`/api/admin/merchants/${id}/status`, { status })
