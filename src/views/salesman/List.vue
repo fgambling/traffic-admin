@@ -33,6 +33,9 @@
         <el-table-column prop="id"     label="ID"   width="80" align="center" />
         <el-table-column prop="name"   label="姓名" width="120" />
         <el-table-column prop="phone"  label="手机号" width="140" />
+        <el-table-column label="所属地区" min-width="160">
+          <template #default="{ row }">{{ [row.province, row.city, row.adminDistrict].filter(Boolean).join(' · ') || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="totalCommission" label="累计佣金" width="130" align="right">
           <template #default="{ row }">¥{{ Number(row.totalCommission || 0).toFixed(2) }}</template>
         </el-table-column>
@@ -72,8 +75,8 @@
     </el-card>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog v-model="showForm" :title="form.id ? '编辑业务员' : '新增业务员'" width="460px">
-      <el-form :model="form" label-width="80px">
+    <el-dialog v-model="showForm" :title="form.id ? '编辑业务员' : '新增业务员'" width="520px">
+      <el-form :model="form" label-width="90px">
         <el-form-item label="姓名">
           <el-input v-model="form.name" placeholder="请输入姓名" />
         </el-form-item>
@@ -82,6 +85,31 @@
         </el-form-item>
         <el-form-item label="密码">
           <el-input v-model="form.password" type="password" :placeholder="form.id ? '留空不修改' : '请输入密码'" show-password />
+        </el-form-item>
+        <el-form-item label="所属地区" required>
+          <el-cascader
+            v-model="regionValue"
+            :options="regionData"
+            :props="cascaderProps"
+            placeholder="请选择省 / 市 / 区"
+            filterable
+            style="width:100%;"
+            @change="onRegionChange"
+          />
+        </el-form-item>
+        <el-form-item label="所属片区">
+          <el-input v-model="form.district" placeholder="如：天河片区（选填）" />
+        </el-form-item>
+        <el-form-item label="所属行业">
+          <el-input v-model="form.industry" placeholder="如：餐饮（选填）" />
+        </el-form-item>
+        <el-form-item label="员工类别">
+          <el-select v-model="form.employeeCategory" placeholder="请选择" clearable style="width:100%;">
+            <el-option label="全职" :value="1" />
+            <el-option label="兼职" :value="2" />
+            <el-option label="总公司员工" :value="3" />
+            <el-option label="分公司员工" :value="4" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -111,6 +139,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { regionData } from 'element-china-area-data'
 import { getSalesmanList, addSalesman, updateSalesman, toggleSalesman, batchImportSalesmen } from '../../api'
 import { fmtDate } from '../../utils/format'
 
@@ -120,11 +149,20 @@ const total     = ref(0)
 const query     = reactive({ name: '', status: null, page: 1, size: 15 })
 const showForm  = ref(false)
 const submitting = ref(false)
-const form      = reactive({ id: null, name: '', phone: '', password: '' })
+const form      = reactive({ id: null, name: '', phone: '', password: '', province: '', city: '', adminDistrict: '', district: '', industry: '', employeeCategory: null })
+const regionValue = ref([])
 const showImport = ref(false)
 const importJson = ref('')
 const importing  = ref(false)
 const importResult = ref(null)
+
+const cascaderProps = { value: 'label', label: 'label', children: 'children' }
+
+function onRegionChange(val) {
+  form.province      = val?.[0] || ''
+  form.city          = val?.[1] || ''
+  form.adminDistrict = val?.[2] || ''
+}
 
 async function load(page) {
   if (page) query.page = page
@@ -145,23 +183,37 @@ function resetQuery() {
 }
 
 function openAdd() {
-  Object.assign(form, { id: null, name: '', phone: '', password: '' })
+  Object.assign(form, { id: null, name: '', phone: '', password: '', province: '', city: '', adminDistrict: '', district: '', industry: '', employeeCategory: null })
+  regionValue.value = []
   showForm.value = true
 }
 
 function openEdit(row) {
-  Object.assign(form, { id: row.id, name: row.name, phone: row.phone, password: '' })
+  Object.assign(form, {
+    id: row.id, name: row.name, phone: row.phone, password: '',
+    province: row.province || '', city: row.city || '',
+    adminDistrict: row.adminDistrict || '',
+    district: row.district || '', industry: row.industry || '',
+    employeeCategory: row.employeeCategory || null
+  })
+  regionValue.value = [row.province, row.city, row.adminDistrict].filter(Boolean)
   showForm.value = true
 }
 
 async function submitForm() {
   if (!form.name || !form.phone) return ElMessage.warning('姓名和手机号不能为空')
+  if (!form.province || !form.city) return ElMessage.warning('请选择所属地区（至少到市）')
   submitting.value = true
   try {
+    const payload = {
+      name: form.name, phone: form.phone, password: form.password,
+      province: form.province, city: form.city, adminDistrict: form.adminDistrict,
+      district: form.district, industry: form.industry, employeeCategory: form.employeeCategory
+    }
     if (form.id) {
-      await updateSalesman(form.id, { name: form.name, phone: form.phone, password: form.password })
+      await updateSalesman(form.id, payload)
     } else {
-      await addSalesman({ name: form.name, phone: form.phone, password: form.password })
+      await addSalesman(payload)
     }
     ElMessage.success(form.id ? '已更新' : '已新增')
     showForm.value = false

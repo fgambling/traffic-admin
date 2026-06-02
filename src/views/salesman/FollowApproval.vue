@@ -100,6 +100,18 @@
           </el-descriptions-item>
         </el-descriptions>
 
+        <!-- 门店实拍图 -->
+        <div v-if="currentRow.store_photo_url" class="store-photo-section">
+          <div class="section-title">门店实拍图</div>
+          <el-image
+            :src="toFullUrl(currentRow.store_photo_url)"
+            :preview-src-list="[toFullUrl(currentRow.store_photo_url)]"
+            preview-teleported
+            fit="cover"
+            class="store-photo-thumb"
+          />
+        </div>
+
         <!-- 合作信息（金额 + 凭证 + 备注） -->
         <div v-if="currentRow.commission || currentRow.voucherUrl || currentRow.followRecord" class="cooperation-section">
           <div class="section-title">合作信息</div>
@@ -114,8 +126,8 @@
           <div class="info-row" v-if="currentRow.voucherUrl">
             <span class="info-label">合作凭证</span>
             <el-image
-              :src="currentRow.voucherUrl"
-              :preview-src-list="[currentRow.voucherUrl]"
+              :src="toFullUrl(currentRow.voucherUrl)"
+              :preview-src-list="[toFullUrl(currentRow.voucherUrl)]"
               preview-teleported
               fit="cover"
               class="voucher-thumb"
@@ -182,6 +194,12 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { getFollowList, getFollowRecords, approveFollow, rejectFollow } from '../../api'
+import { BASE_URL } from '../../utils/request'
+
+function toFullUrl(url) {
+  if (!url) return ''
+  return url.startsWith('http') ? url : BASE_URL + url
+}
 
 const loading = ref(false)
 const list    = ref([])
@@ -305,6 +323,19 @@ onMounted(load)
   font-weight: 600;
   color: #606266;
   margin-bottom: 10px;
+}
+
+.store-photo-section {
+  margin-bottom: 16px;
+}
+
+.store-photo-thumb {
+  width: 100%;
+  height: 200px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  cursor: pointer;
+  display: block;
 }
 
 .cooperation-section {
