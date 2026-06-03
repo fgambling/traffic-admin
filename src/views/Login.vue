@@ -16,7 +16,6 @@
           登录
         </el-button>
       </el-form>
-      <p class="login-hint">开发测试账号：admin / admin123</p>
     </div>
   </div>
 </template>
@@ -32,7 +31,7 @@ const auth = useAuthStore()
 const formRef = ref()
 const loading = ref(false)
 
-const form = ref({ username: 'admin', password: 'admin123' })
+const form = ref({ username: '', password: '' })
 const rules = {
   username: [{ required: true, message: '请输入账号' }],
   password: [{ required: true, message: '请输入密码' }]
@@ -41,10 +40,12 @@ const rules = {
 async function submit() {
   await formRef.value.validate()
   loading.value = true
+  localStorage.removeItem('admin_token')
   try {
     const data = await login(form.value)
-    auth.setLogin(data.token, data.name || form.value.username)
-    router.push('/')
+    const role = data.role || 'admin'
+    auth.setLogin(data.token, data.name || form.value.username, role)
+    router.push(role === 'finance' ? '/salesman/follow-approval' : '/')
   } catch (_) {
     // error handled by interceptor
   } finally {
@@ -73,11 +74,5 @@ async function submit() {
   margin-bottom: 36px;
   .logo-icon { font-size: 48px; display: block; margin-bottom: 12px; }
   h1 { font-size: 22px; color: #1a1a2e; font-weight: 700; margin: 0; }
-}
-.login-hint {
-  text-align: center;
-  color: #aaa;
-  font-size: 12px;
-  margin-top: 16px;
 }
 </style>

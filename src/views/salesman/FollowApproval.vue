@@ -13,10 +13,9 @@
         <el-form-item label="业务员">
           <el-input v-model="query.salesmanName" placeholder="业务员姓名" clearable style="width:140px;" />
         </el-form-item>
-        <el-form-item label="跟进状态">
+        <el-form-item v-if="!auth.isFinance" label="跟进状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width:120px;">
             <el-option label="接洽中"  :value="1" />
-            <el-option label="已合作"  :value="2" />
             <el-option label="已失效"  :value="3" />
             <el-option label="待审批"  :value="4" />
             <el-option label="审批失败" :value="5" />
@@ -31,24 +30,24 @@
 
     <el-card shadow="never">
       <el-table :data="list" stripe v-loading="loading">
-        <el-table-column prop="salesmanName"  label="业务员"   width="110" />
-        <el-table-column prop="salesmanPhone" label="业务员电话" width="135" />
-        <el-table-column prop="merchantName"  label="商家名称" min-width="140" />
-        <el-table-column prop="contactPerson" label="联系人"   width="100" />
-        <el-table-column prop="contactPhone"  label="联系电话" width="135" />
-        <el-table-column prop="address"       label="地址"     min-width="160" show-overflow-tooltip />
+        <el-table-column prop="salesman_name"  label="业务员"   width="110" />
+        <el-table-column prop="salesman_phone" label="业务员电话" width="135" />
+        <el-table-column prop="merchant_name"  label="商家名称" min-width="140" />
+        <el-table-column prop="contact_person" label="联系人"   width="100" />
+        <el-table-column prop="contact_phone"  label="联系电话" width="135" />
+        <el-table-column prop="address"        label="地址"     min-width="160" show-overflow-tooltip />
         <el-table-column label="状态" width="150" align="center">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.status).type" size="small">
               {{ statusTag(row.status).label }}
             </el-tag>
-            <el-tag v-if="row.coFollowCount > 0" class="tag-joint" size="small" style="margin-left:4px;">
+            <el-tag v-if="row.co_follow_count > 0" class="tag-joint" size="small" style="margin-left:4px;">
               联合跟进
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间" width="155">
-          <template #default="{ row }">{{ fmtDate(row.updatedAt) }}</template>
+        <el-table-column prop="updated_at" label="更新时间" width="155">
+          <template #default="{ row }">{{ fmtDate(row.updated_at) }}</template>
         </el-table-column>
         <el-table-column label="操作" width="100" align="center" fixed="right">
           <template #default="{ row }">
@@ -80,23 +79,23 @@
       <template v-if="currentRow">
         <!-- 基本信息 -->
         <el-descriptions :column="2" border size="small" style="margin-bottom:16px;">
-          <el-descriptions-item label="商家名称" :span="2">{{ currentRow.merchantName }}</el-descriptions-item>
-          <el-descriptions-item label="联系人">{{ currentRow.contactPerson || '--' }}</el-descriptions-item>
-          <el-descriptions-item label="联系电话">{{ currentRow.contactPhone || '--' }}</el-descriptions-item>
+          <el-descriptions-item label="商家名称" :span="2">{{ currentRow.merchant_name }}</el-descriptions-item>
+          <el-descriptions-item label="联系人">{{ currentRow.contact_person || '--' }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ currentRow.contact_phone || '--' }}</el-descriptions-item>
           <el-descriptions-item label="地址" :span="2">{{ currentRow.address || '--' }}</el-descriptions-item>
-          <el-descriptions-item label="业务员">{{ currentRow.salesmanName }}</el-descriptions-item>
-          <el-descriptions-item label="业务员电话">{{ currentRow.salesmanPhone }}</el-descriptions-item>
+          <el-descriptions-item label="业务员">{{ currentRow.salesman_name }}</el-descriptions-item>
+          <el-descriptions-item label="业务员电话">{{ currentRow.salesman_phone }}</el-descriptions-item>
           <el-descriptions-item label="跟进状态">
             <el-tag :type="statusTag(currentRow.status).type" size="small">
               {{ statusTag(currentRow.status).label }}
             </el-tag>
-            <el-tag v-if="currentRow.coFollowCount > 0" class="tag-joint" size="small" style="margin-left:6px;">
+            <el-tag v-if="currentRow.co_follow_count > 0" class="tag-joint" size="small" style="margin-left:6px;">
               联合跟进
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ fmtDate(currentRow.updatedAt) }}</el-descriptions-item>
-          <el-descriptions-item v-if="currentRow.coFollowCount > 0" label="共同跟进业务员" :span="2">
-            {{ currentRow.coSalesmanNames }}
+          <el-descriptions-item label="更新时间">{{ fmtDate(currentRow.updated_at) }}</el-descriptions-item>
+          <el-descriptions-item v-if="currentRow.co_follow_count > 0" label="共同跟进业务员" :span="2">
+            {{ currentRow.co_salesman_names }}
           </el-descriptions-item>
         </el-descriptions>
 
@@ -113,21 +112,21 @@
         </div>
 
         <!-- 合作信息（金额 + 凭证 + 备注） -->
-        <div v-if="currentRow.commission || currentRow.voucherUrl || currentRow.followRecord" class="cooperation-section">
+        <div v-if="currentRow.commission || currentRow.voucher_url || currentRow.follow_record" class="cooperation-section">
           <div class="section-title">合作信息</div>
           <div class="info-row" v-if="currentRow.commission">
             <span class="info-label">合作金额</span>
-            <span class="info-val amount">¥{{ Number(currentRow.commission).toFixed(2) }}</span>
+            <span class="info-val" style="font-size:16px;">¥{{ Number(currentRow.commission).toFixed(2) }}</span>
           </div>
-          <div class="info-row" v-if="currentRow.followRecord">
+          <div class="info-row" v-if="currentRow.follow_record">
             <span class="info-label">备注</span>
-            <span class="info-val">{{ currentRow.followRecord }}</span>
+            <span class="info-val">{{ currentRow.follow_record }}</span>
           </div>
-          <div class="info-row" v-if="currentRow.voucherUrl">
+          <div class="info-row" v-if="currentRow.voucher_url">
             <span class="info-label">合作凭证</span>
             <el-image
-              :src="toFullUrl(currentRow.voucherUrl)"
-              :preview-src-list="[toFullUrl(currentRow.voucherUrl)]"
+              :src="toFullUrl(currentRow.voucher_url)"
+              :preview-src-list="[toFullUrl(currentRow.voucher_url)]"
               preview-teleported
               fit="cover"
               class="voucher-thumb"
@@ -178,10 +177,47 @@
             </div>
           </div>
 
+          <!-- 佣金结算步骤 -->
+          <div v-else-if="showApproveStep" class="commission-step">
+            <div class="section-title">佣金结算（可选）</div>
+            <el-radio-group v-model="commissionMode" @change="() => { selectedRuleId = null; customCommissionAmount = '' }">
+              <el-radio value="none">不结算佣金</el-radio>
+              <el-radio value="rule">按规则结算</el-radio>
+              <el-radio value="custom">自定义金额</el-radio>
+            </el-radio-group>
+            <div v-if="commissionMode === 'rule'" style="margin-top:14px;">
+              <el-select v-model="selectedRuleId" placeholder="选择佣金规则" style="width:100%;">
+                <el-option
+                  v-for="rule in commissionRules" :key="rule.id"
+                  :value="rule.id" :label="ruleOptionLabel(rule)" :disabled="isRuleDisabled(rule)"
+                >
+                  <div style="display:flex;justify-content:space-between;gap:16px;">
+                    <span>{{ rule.name }}</span>
+                    <span style="color:#909399;font-size:12px;">
+                      <template v-if="Number(rule.rate) > 0">{{ (Number(rule.rate)*100).toFixed(2).replace(/\.?0+$/,'') }}% → ¥{{ calcRuleAmount(rule) }}</template>
+                      <template v-else>固定 ¥{{ Number(rule.fixedAmount).toFixed(2) }}<span v-if="isRuleDisabled(rule)" style="color:#f56c6c;">（超出合作金额）</span></template>
+                    </span>
+                  </div>
+                </el-option>
+              </el-select>
+              <div v-if="selectedRuleId" style="margin-top:8px;font-size:13px;color:#17794a;">预计佣金：¥{{ calcRuleAmount(commissionRules.find(r => r.id === selectedRuleId)) }}</div>
+            </div>
+            <div v-if="commissionMode === 'custom'" style="margin-top:14px;">
+              <el-input v-model="customCommissionAmount" placeholder="输入佣金金额" style="width:220px;" @input="customAmountError = ''">
+                <template #append>元</template>
+              </el-input>
+              <div v-if="customAmountError" style="color:#f56c6c;font-size:12px;margin-top:4px;">{{ customAmountError }}</div>
+            </div>
+            <div class="reject-actions" style="margin-top:16px;">
+              <el-button @click="showApproveStep = false">返回</el-button>
+              <el-button type="success" :loading="approving" @click="confirmApprove">确认通过</el-button>
+            </div>
+          </div>
+
           <!-- 主操作按钮 -->
           <div v-else class="dialog-actions">
             <el-button type="danger" plain @click="showRejectInput = true">驳回申请</el-button>
-            <el-button type="success" :loading="approving" @click="confirmApprove">通过审批</el-button>
+            <el-button type="success" @click="showApproveStep = true">通过审批</el-button>
           </div>
         </template>
       </template>
@@ -193,18 +229,23 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { getFollowList, getFollowRecords, approveFollow, rejectFollow } from '../../api'
+import { getFollowDetail, getFollowRecords, approveFollow, rejectFollow, getCommissionRules } from '../../api'
 import { BASE_URL } from '../../utils/request'
+import { useAuthStore } from '../../store/auth'
+import { useBadgeStore } from '../../store/badges'
 
 function toFullUrl(url) {
   if (!url) return ''
   return url.startsWith('http') ? url : BASE_URL + url
 }
 
+const auth    = useAuthStore()
+const badges  = useBadgeStore()
 const loading = ref(false)
 const list    = ref([])
 const total   = ref(0)
-const query   = reactive({ merchantName: '', salesmanName: '', status: null, page: 1, size: 15 })
+// 财务角色默认只看待审批(status=4)
+const query   = reactive({ merchantName: '', salesmanName: '', status: auth.isFinance ? 4 : null, page: 1, size: 15 })
 
 // ── 弹窗状态 ──────────────────────────────────────────────────
 const dialogVisible   = ref(false)
@@ -215,6 +256,12 @@ const approving       = ref(false)
 const rejecting       = ref(false)
 const showRejectInput = ref(false)
 const rejectReason    = ref('')
+const showApproveStep        = ref(false)
+const commissionMode         = ref('none')
+const selectedRuleId         = ref(null)
+const customCommissionAmount = ref('')
+const customAmountError      = ref('')
+const commissionRules        = ref([])
 
 function statusTag(s) {
   return {
@@ -237,7 +284,7 @@ async function load(page) {
   if (page) query.page = page
   loading.value = true
   try {
-    const data = await getFollowList({
+    const data = await getFollowDetail({
       status:       query.status       || undefined,
       merchantName: query.merchantName || undefined,
       salesmanName: query.salesmanName || undefined,
@@ -260,6 +307,11 @@ async function openDetail(row) {
   currentRow.value    = row
   records.value       = []
   showRejectInput.value = false
+  showApproveStep.value = false
+  commissionMode.value  = 'none'
+  selectedRuleId.value  = null
+  customCommissionAmount.value = ''
+  customAmountError.value      = ''
   rejectReason.value  = ''
   dialogVisible.value = true
 
@@ -277,20 +329,53 @@ function resetDialog() {
   currentRow.value    = null
   records.value       = []
   showRejectInput.value = false
+  showApproveStep.value = false
   rejectReason.value  = ''
 }
 
+function calcRuleAmount(rule) {
+  if (!rule) return '0.00'
+  const cooperation = Number(currentRow.value?.commission || 0)
+  if (Number(rule.rate) > 0) return (cooperation * Number(rule.rate)).toFixed(2)
+  return Number(rule.fixedAmount || 0).toFixed(2)
+}
+
+function isRuleDisabled(rule) {
+  if (Number(rule.rate) > 0) return false
+  return Number(rule.fixedAmount || 0) > Number(currentRow.value?.commission || 0)
+}
+
+function ruleOptionLabel(rule) {
+  if (Number(rule.rate) > 0) {
+    const pct = (Number(rule.rate) * 100).toFixed(2).replace(/\.?0+$/, '')
+    return `${rule.name}（${pct}% → ¥${calcRuleAmount(rule)}）`
+  }
+  return `${rule.name}（固定 ¥${Number(rule.fixedAmount || 0).toFixed(2)}）`
+}
+
 async function confirmApprove() {
-  await ElMessageBox.confirm(
-    `确认通过「${currentRow.value.merchantName}」的合作申请？合作金额：¥${Number(currentRow.value.commission || 0).toFixed(2)}`,
-    '审批通过', { type: 'success', confirmButtonText: '确认通过', cancelButtonText: '取消' }
-  )
+  const body = {}
+  if (commissionMode.value === 'rule') {
+    if (!selectedRuleId.value) { ElMessage.warning('请选择佣金规则'); return }
+    body.ruleId = selectedRuleId.value
+  } else if (commissionMode.value === 'custom') {
+    const v = customCommissionAmount.value.trim()
+    if (!v) { customAmountError.value = '请输入佣金金额'; return }
+    if (!/^\d+(\.\d+)?$/.test(v)) { customAmountError.value = '请输入有效数字'; return }
+    const n = Number(v)
+    if (n <= 0) { customAmountError.value = '必须为正数'; return }
+    const cooperation = Number(currentRow.value?.commission || 0)
+    if (n > cooperation) { customAmountError.value = `佣金不能超过合作金额 ¥${cooperation.toFixed(2)}`; return }
+    customAmountError.value = ''
+    body.commissionAmount = n
+  }
   approving.value = true
   try {
-    await approveFollow(currentRow.value.id)
+    await approveFollow(currentRow.value.id, body)
     ElMessage.success('审批已通过')
     dialogVisible.value = false
     load()
+    badges.refresh()
   } finally {
     approving.value = false
   }
@@ -303,12 +388,16 @@ async function confirmReject() {
     ElMessage.success('已驳回')
     dialogVisible.value = false
     load()
+    badges.refresh()
   } finally {
     rejecting.value = false
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  getCommissionRules().then(r => { commissionRules.value = r || [] })
+})
 </script>
 
 <style scoped>
@@ -336,6 +425,12 @@ onMounted(load)
   border: 1px solid #eee;
   cursor: pointer;
   display: block;
+}
+
+.commission-step {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 14px 16px;
 }
 
 .cooperation-section {

@@ -113,7 +113,76 @@
           />
         </el-card>
       </el-tab-pane>
-      <!-- ── Tab 2：套餐申请 ── -->
+      <!-- ── Tab 2：跟进商家列表 ── -->
+      <el-tab-pane label="跟进商家列表" name="follows">
+        <!-- 搜索栏 -->
+        <el-card shadow="never" style="margin-bottom:16px;">
+          <el-form :model="followQuery" inline>
+            <el-form-item label="商家名称">
+              <el-input v-model="followQuery.merchantName" placeholder="搜索商家名称" clearable style="width:180px;" />
+            </el-form-item>
+            <el-form-item label="业务员">
+              <el-input v-model="followQuery.salesmanName" placeholder="搜索业务员姓名" clearable style="width:160px;" />
+            </el-form-item>
+            <el-form-item label="跟进状态">
+              <el-select v-model="followQuery.status" placeholder="全部" clearable style="width:120px;">
+                <el-option label="接洽中"   :value="1" />
+                <el-option label="已失效"   :value="3" />
+                <el-option label="待审批"   :value="4" />
+                <el-option label="审批失败" :value="5" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="loadFollows(1)">查询</el-button>
+              <el-button @click="resetFollowQuery">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <el-card shadow="never">
+          <el-table :data="followList" stripe v-loading="followLoading" style="width:100%;">
+            <el-table-column prop="id"             label="ID"       width="70"  align="center" />
+            <el-table-column prop="merchant_name"  label="商家名称" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="license_no"     label="营业执照" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="contact_person" label="联系人"   width="90" />
+            <el-table-column prop="contact_phone"  label="联系电话" width="130" />
+            <el-table-column prop="address"        label="地址"     min-width="160" show-overflow-tooltip />
+            <el-table-column prop="salesman_name"  label="业务员"   width="90" />
+            <el-table-column prop="salesman_phone" label="业务员电话" width="130" />
+            <el-table-column label="跟进状态" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag :type="followStatusTag(row.status).type" size="small">{{ followStatusTag(row.status).label }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="门店照片" width="90" align="center">
+              <template #default="{ row }">
+                <el-image
+                  v-if="row.store_photo_url"
+                  :src="toFullUrl(row.store_photo_url)"
+                  :preview-src-list="[toFullUrl(row.store_photo_url)]"
+                  preview-teleported
+                  fit="cover"
+                  style="width:48px;height:36px;border-radius:4px;cursor:pointer;"
+                />
+                <span v-else style="color:#ccc;">--</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="最后更新" width="155" align="center">
+              <template #default="{ row }">{{ fmtDate(row.updated_at) }}</template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            v-model:current-page="followQuery.page"
+            :page-size="followQuery.size"
+            :total="followTotal"
+            layout="total, prev, pager, next"
+            style="margin-top:16px;justify-content:flex-end;"
+            @current-change="p => loadFollows(p)"
+          />
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ── Tab 3：套餐申请 ── -->
       <el-tab-pane name="applications">
         <template #label>
           套餐申请
@@ -348,6 +417,18 @@
           <el-descriptions-item label="申请时间" :span="2">{{ fmtDate(approvalRow.updated_at) }}</el-descriptions-item>
         </el-descriptions>
 
+        <!-- 门店实拍图 -->
+        <div v-if="approvalRow.store_photo_url" class="store-photo-section" style="margin-bottom:16px;">
+          <div class="section-title">门店实拍图</div>
+          <el-image
+            :src="toFullUrl(approvalRow.store_photo_url)"
+            :preview-src-list="[toFullUrl(approvalRow.store_photo_url)]"
+            preview-teleported
+            fit="cover"
+            class="store-photo-thumb"
+          />
+        </div>
+
         <!-- 合作信息 -->
         <div class="cooperation-section">
           <div class="section-title">合作信息</div>
@@ -362,8 +443,8 @@
           <div class="info-row" v-if="approvalRow.voucher_url">
             <span class="info-label">合作凭证</span>
             <el-image
-              :src="approvalRow.voucher_url"
-              :preview-src-list="[approvalRow.voucher_url]"
+              :src="toFullUrl(approvalRow.voucher_url)"
+              :preview-src-list="[toFullUrl(approvalRow.voucher_url)]"
               preview-teleported
               fit="cover"
               class="voucher-thumb"
@@ -481,17 +562,25 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import {
   getMerchantList, createMerchant, toggleMerchant, updateMerchant,
-  getFollowList, getFollowRecords, approveFollow, rejectFollow,
+  getFollowList, getFollowDetail, getFollowRecords, approveFollow, rejectFollow,
   getCommissionRules, getMerchantFollowers,
   getPackageApplications, reviewPackageApplication, getAppPendingCount
 } from '../../api'
 import { BASE_URL } from '../../utils/request'
+import { useBadgeStore } from '../../store/badges'
+
+function toFullUrl(url) {
+  if (!url) return ''
+  return url.startsWith('http') ? url : BASE_URL + url
+}
 
 // ── 当前 tab ──────────────────────────────────────────────────
+const badges = useBadgeStore()
 const activeTab = ref('list')
 
 function onTabChange(tab) {
   if (tab === 'pending')      loadPending(1)
+  if (tab === 'follows')      loadFollows(1)
   if (tab === 'applications') loadApplications(1)
 }
 
@@ -638,6 +727,49 @@ async function toggleStatus(row) {
   await toggleMerchant(row.id, next)
   ElMessage.success(`已${label}`)
   load()
+}
+
+// ── 跟进商家列表 ──────────────────────────────────────────────
+const followLoading = ref(false)
+const followList    = ref([])
+const followTotal   = ref(0)
+const followQuery   = reactive({ merchantName: '', salesmanName: '', status: null, page: 1, size: 20 })
+
+const followStatusTag = s => ({
+  1: { type: 'primary', label: '接洽中'   },
+  2: { type: 'success', label: '已合作'   },
+  3: { type: 'info',    label: '已失效'   },
+  4: { type: 'warning', label: '待审批'   },
+  5: { type: 'danger',  label: '审批失败' }
+}[s] || { type: 'info', label: '未知' })
+
+function fmtDay(dt) {
+  if (!dt) return '--'
+  const d = new Date(dt)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`
+}
+
+async function loadFollows(page) {
+  if (page) followQuery.page = page
+  followLoading.value = true
+  try {
+    // 已合作(status=2)的商家不在跟进列表里展示
+    const params = { ...followQuery }
+    if (!params.status) delete params.status
+    if (params.status === 2) { followList.value = []; followTotal.value = 0; followLoading.value = false; return }
+    const data = await getFollowDetail(params)
+    followList.value  = (data.list || []).filter(r => r.status !== 2)
+    followTotal.value = data.total || 0
+  } catch (_) {
+  } finally {
+    followLoading.value = false
+  }
+}
+
+function resetFollowQuery() {
+  Object.assign(followQuery, { merchantName: '', salesmanName: '', status: null, page: 1 })
+  loadFollows(1)
 }
 
 // ── 待合作审批 ────────────────────────────────────────────────
@@ -856,6 +988,7 @@ async function confirmAppReview() {
     appReviewVisible.value = false
     loadApplications(1)
     fetchAppPendingCount()
+    badges.refresh()
     if (appReviewAction.value === 1) load()  // 刷新商家列表中的套餐状态
   } catch (_) {
     ElMessage.error('操作失败')

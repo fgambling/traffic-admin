@@ -19,6 +19,7 @@ const routes = [
       { path: 'ai/cost',                 name: 'AiCost',           component: () => import('../views/ai/Cost.vue'),                    meta: { title: 'AI费用统计', icon: 'Coin' } },
       { path: 'ai/rules',                name: 'AiRules',          component: () => import('../views/ai/Rules.vue'),                   meta: { hidden: true } },
       { path: 'ai/config',               name: 'AiConfig',         component: () => import('../views/ai/Config.vue'),                  meta: { hidden: true } },
+      { path: 'system/appearance',         name: 'Appearance',       component: () => import('../views/system/Appearance.vue'),         meta: { title: '登录页外观', icon: 'Picture' } },
       { path: 'system/admins',            name: 'Admins',           component: () => import('../views/system/Admins.vue'),              meta: { title: '管理员账号', icon: 'User' } },
       { path: 'system/logs',              name: 'OpLogs',           component: () => import('../views/system/Logs.vue'),                meta: { title: '操作日志',   icon: 'Document' } },
       { path: 'system/bugs',              name: 'BugLogs',          component: () => import('../views/system/BugLogs.vue'),             meta: { title: 'BUG日志',    icon: 'Warning' } },
@@ -32,9 +33,18 @@ const router = createRouter({
   routes
 })
 
+// 财务角色只能访问的路径白名单
+const FINANCE_ALLOWED = ['/salesman/follow-approval', '/withdraw', '/login']
+
 router.beforeEach(to => {
   const token = localStorage.getItem('admin_token')
   if (!to.meta.public && !token) return '/login'
+
+  const role = localStorage.getItem('admin_role')
+  if (role === 'finance') {
+    const allowed = FINANCE_ALLOWED.some(p => to.path === p || to.path.startsWith(p + '/'))
+    if (!allowed) return '/salesman/follow-approval'
+  }
 })
 
 export default router

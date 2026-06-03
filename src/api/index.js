@@ -20,8 +20,11 @@ export const updateDevice   = (id, data)   => http.put(`/api/admin/devices/${id}
 export const bindDevice     = data         => http.post('/api/admin/devices/bind', data)
 
 // ── 数据监控 ──────────────────────────────────────────────────
-export const getMonitorOverview = ()       => http.get('/api/admin/monitor/overview')
-export const getMonitorTrend    = params   => http.get('/api/admin/monitor/trend', { params })
+export const getMonitorOverview      = ()       => http.get('/api/admin/monitor/overview')
+export const getMonitorTrend         = params   => http.get('/api/admin/monitor/trend', { params })
+export const getCooperationDetail    = params   => http.get('/api/admin/monitor/cooperation-detail', { params })
+export const getSalesmanRank         = params   => http.get('/api/admin/monitor/salesman-rank', { params })
+export const getExpiringPackages     = ()        => http.get('/api/admin/monitor/expiring-packages')
 
 // ── 业务员管理 ────────────────────────────────────────────────
 export const getSalesmanList    = params        => http.get('/api/admin/salesmen', { params })
@@ -31,7 +34,9 @@ export const toggleSalesman     = (id, status)  => http.put(`/api/admin/salesmen
 export const batchImportSalesmen = rows         => http.post('/api/admin/salesmen/batch-import', rows)
 
 // ── 跟进管理 ──────────────────────────────────────────────────
+export const getFollowPendingCount = ()          => http.get('/api/admin/follow/pending-count')
 export const getFollowList        = params       => http.get('/api/admin/follow/list', { params })
+export const getFollowDetail      = params       => http.get('/api/admin/follow/detail', { params })
 export const getFollowRecords     = id           => http.get(`/api/admin/follow/${id}/records`)
 export const approveFollow        = (id, data)   => http.post(`/api/admin/follow/${id}/approve`, data ?? {})
 export const rejectFollow         = (id, reason) => http.post(`/api/admin/follow/${id}/reject`, { reason })
@@ -43,6 +48,7 @@ export const saveCommissionRule = data    => http.post('/api/admin/commission-ru
 export const deleteCommissionRule = id   => http.delete(`/api/admin/commission-rules/${id}`)
 
 // ── 提现审核 ──────────────────────────────────────────────────
+export const getWithdrawPendingCount = ()      => http.get('/api/admin/withdraw/pending-count')
 export const getWithdrawList    = params       => http.get('/api/admin/withdraw', { params })
 export const approveWithdraw    = (id, data)   => http.put(`/api/admin/withdraw/${id}/approve`, data)
 export const rejectWithdraw     = (id, data)   => http.put(`/api/admin/withdraw/${id}/reject`, data)
@@ -63,6 +69,10 @@ export const reviewAiAdvice     = (id, data) => http.put(`/api/admin/ai/advice/$
 export const getPackageApplications  = params       => http.get('/api/admin/merchants/package-applications', { params })
 export const getAppPendingCount      = ()           => http.get('/api/admin/merchants/package-applications/pending-count')
 export const reviewPackageApplication = (id, data)  => http.put(`/api/admin/merchants/package-applications/${id}/review`, data)
+
+// ── 外观设置 ──────────────────────────────────────────────────
+export const getAppearance  = ()     => http.get('/api/admin/system/appearance')
+export const saveAppearance = data   => http.put('/api/admin/system/appearance', data)
 
 // ── 系统设置 ──────────────────────────────────────────────────
 export const getAdminList       = ()      => http.get('/api/admin/system/admins')

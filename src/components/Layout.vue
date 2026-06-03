@@ -15,14 +15,29 @@
         :collapse-transition="false"
         router
       >
-        <el-menu-item index="/monitor">
+        <el-menu-item v-if="!auth.isFinance" index="/monitor">
           <el-icon><Monitor /></el-icon><template #title>数据监控</template>
         </el-menu-item>
-        <el-menu-item index="/merchant">
-          <el-icon><Shop /></el-icon><template #title>商家管理</template>
+        <el-menu-item v-if="!auth.isFinance" index="/merchant">
+          <el-icon><Shop /></el-icon>
+          <template #title>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <span>商家管理</span>
+              <el-badge v-if="badges.packageCount + badges.followCount > 0" :value="badges.packageCount + badges.followCount" :max="99" style="transform:translateY(-4px);" />
+            </span>
+          </template>
+        </el-menu-item>
+        <el-menu-item v-if="auth.isFinance" index="/salesman/follow-approval">
+          <el-icon><Stamp /></el-icon>
+          <template #title>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <span>待合作审批</span>
+              <el-badge v-if="badges.followCount > 0" :value="badges.followCount" :max="99" style="transform:translateY(-4px);" />
+            </span>
+          </template>
         </el-menu-item>
         <!-- 业务员 -->
-        <el-sub-menu index="/salesman">
+        <el-sub-menu v-if="!auth.isFinance" index="/salesman">
           <template #title>
             <el-icon><UserFilled /></el-icon><span>业务员管理</span>
           </template>
@@ -31,11 +46,17 @@
         </el-sub-menu>
 
         <el-menu-item index="/withdraw">
-          <el-icon><Money /></el-icon><template #title>提现审核</template>
+          <el-icon><Money /></el-icon>
+          <template #title>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <span>提现审核</span>
+              <el-badge v-if="badges.withdrawCount > 0" :value="badges.withdrawCount" :max="99" style="transform:translateY(-4px);" />
+            </span>
+          </template>
         </el-menu-item>
 
         <!-- 建议管理 -->
-        <el-sub-menu index="/ai">
+        <el-sub-menu v-if="!auth.isFinance" index="/ai">
           <template #title>
             <el-icon><MagicStick /></el-icon><span>建议管理</span>
           </template>
@@ -45,10 +66,11 @@
         </el-sub-menu>
 
         <!-- 系统设置 -->
-        <el-sub-menu index="/system">
+        <el-sub-menu v-if="!auth.isFinance" index="/system">
           <template #title>
             <el-icon><Setting /></el-icon><span>系统设置</span>
           </template>
+          <el-menu-item index="/system/appearance">登录页外观</el-menu-item>
           <el-menu-item index="/system/admins">管理员账号</el-menu-item>
           <el-menu-item index="/system/logs">操作日志</el-menu-item>
           <el-menu-item index="/system/bugs">BUG日志</el-menu-item>
@@ -77,14 +99,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { useBadgeStore } from '../store/badges'
 
 const route    = useRoute()
 const router   = useRouter()
 const auth     = useAuthStore()
+const badges   = useBadgeStore()
 const collapsed = ref(false)
+
+
+let _timer = null
+onMounted(() => {
+  badges.refresh()
+  _timer = setInterval(badges.refresh, 60000)
+})
+onUnmounted(() => { if (_timer) clearInterval(_timer) })
 
 function handleLogout() {
   auth.logout()

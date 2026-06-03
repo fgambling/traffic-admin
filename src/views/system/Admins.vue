@@ -7,8 +7,15 @@
     <el-card shadow="never">
       <el-table :data="list" stripe v-loading="loading">
         <el-table-column prop="id"        label="ID"   width="80" align="center" />
-        <el-table-column prop="username"  label="账号" min-width="180" />
-        <el-table-column prop="name"      label="姓名" width="140" />
+        <el-table-column prop="username"  label="账号" min-width="160" />
+        <el-table-column prop="name"      label="姓名" width="120" />
+        <el-table-column prop="role"      label="权限" width="130" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.role === 'finance' ? 'warning' : 'primary'" size="small">
+              {{ row.role === 'finance' ? '财务管理' : '超级管理员' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180">
           <template #default="{ row }">{{ fmtDate(row.createdAt) }}</template>
         </el-table-column>
@@ -27,6 +34,12 @@
         <el-form-item label="姓名"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="密码">
           <el-input v-model="form.password" type="password" show-password :placeholder="isEdit ? '留空则不修改' : ''" />
+        </el-form-item>
+        <el-form-item label="权限">
+          <el-select v-model="form.role" style="width:100%">
+            <el-option label="超级管理员" value="admin" />
+            <el-option label="财务管理" value="finance" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -49,7 +62,7 @@ const loading       = ref(false)
 const list          = ref([])
 const dialogVisible = ref(false)
 const isEdit        = ref(false)
-const form          = reactive({ id: null, username: '', name: '', password: '' })
+const form          = reactive({ id: null, username: '', name: '', password: '', role: 'admin' })
 
 async function load() {
   loading.value = true
@@ -58,13 +71,13 @@ async function load() {
 }
 
 function openAdd() {
-  Object.assign(form, { id: null, username: '', name: '', password: '' })
+  Object.assign(form, { id: null, username: '', name: '', password: '', role: 'admin' })
   isEdit.value = false
   dialogVisible.value = true
 }
 
 function openEdit(row) {
-  Object.assign(form, { id: row.id, username: row.username, name: row.name, password: '' })
+  Object.assign(form, { id: row.id, username: row.username, name: row.name, password: '', role: row.role || 'admin' })
   isEdit.value = true
   dialogVisible.value = true
 }
@@ -72,7 +85,7 @@ function openEdit(row) {
 async function save() {
   if (!form.username) return ElMessage.warning('账号不能为空')
   if (isEdit.value) {
-    const body = { username: form.username, name: form.name }
+    const body = { username: form.username, name: form.name, role: form.role }
     if (form.password) body.password = form.password
     await http.put(`/api/admin/system/admins/${form.id}`, body)
   } else {

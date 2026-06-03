@@ -10,7 +10,7 @@
         <el-form-item label="业务员">
           <el-input v-model="query.salesmanName" placeholder="姓名搜索" clearable style="width:140px;" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item v-if="!auth.isFinance" label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width:120px;">
             <el-option label="待审核" :value="0" />
             <el-option label="已打款" :value="1" />
@@ -82,11 +82,15 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWithdrawList, approveWithdraw, rejectWithdraw } from '../../api'
 import { fmtDate } from '../../utils/format'
+import { useAuthStore } from '../../store/auth'
+import { useBadgeStore } from '../../store/badges'
 
+const auth       = useAuthStore()
+const badges     = useBadgeStore()
 const loading    = ref(false)
 const list       = ref([])
 const total      = ref(0)
-const query      = reactive({ salesmanName: '', status: null, page: 1, size: 15 })
+const query      = reactive({ salesmanName: '', status: auth.isFinance ? 0 : null, page: 1, size: 15 })
 const showReject = ref(false)
 const rejectRemark = ref('')
 const submitting = ref(false)
@@ -120,6 +124,7 @@ async function approve(row) {
   await approveWithdraw(row.id, { remark: '' })
   ElMessage.success('已通过')
   load()
+  badges.refresh()
 }
 
 function reject(row) {
@@ -135,6 +140,7 @@ async function confirmReject() {
     ElMessage.success('已驳回，余额已退还')
     showReject.value = false
     load()
+    badges.refresh()
   } catch (_) {
     ElMessage.error('操作失败')
   } finally {

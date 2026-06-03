@@ -33,8 +33,17 @@
         <el-table-column prop="id"     label="ID"   width="80" align="center" />
         <el-table-column prop="name"   label="姓名" width="120" />
         <el-table-column prop="phone"  label="手机号" width="140" />
+        <el-table-column label="员工类别" width="100" align="center">
+          <template #default="{ row }">{{ catLabel(row.employeeCategory) }}</template>
+        </el-table-column>
         <el-table-column label="所属地区" min-width="160">
           <template #default="{ row }">{{ [row.province, row.city, row.adminDistrict].filter(Boolean).join(' · ') || '—' }}</template>
+        </el-table-column>
+        <el-table-column prop="district" label="所属片区" width="120">
+          <template #default="{ row }">{{ row.district || '—' }}</template>
+        </el-table-column>
+        <el-table-column prop="industry" label="所属行业" width="120">
+          <template #default="{ row }">{{ row.industry || '—' }}</template>
         </el-table-column>
         <el-table-column prop="totalCommission" label="累计佣金" width="130" align="right">
           <template #default="{ row }">¥{{ Number(row.totalCommission || 0).toFixed(2) }}</template>
@@ -157,6 +166,9 @@ const importing  = ref(false)
 const importResult = ref(null)
 
 const cascaderProps = { value: 'label', label: 'label', children: 'children' }
+
+const CAT_LABEL = { 1: '全职', 2: '兼职', 3: '总公司员工', 4: '分公司员工' }
+function catLabel(c) { return CAT_LABEL[c] || '—' }
 
 function onRegionChange(val) {
   form.province      = val?.[0] || ''

@@ -11,7 +11,7 @@ const http = axios.create({
 
 http.interceptors.request.use(cfg => {
   const token = localStorage.getItem('admin_token')
-  if (token) cfg.headers.Authorization = `Bearer ${token}`
+  if (token && !cfg.url?.endsWith('/login')) cfg.headers.Authorization = `Bearer ${token}`
   return cfg
 })
 

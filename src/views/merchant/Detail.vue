@@ -20,9 +20,15 @@
               <el-tag :type="pkgTag(detail.packageType).type" size="small">
                 {{ pkgTag(detail.packageType).label }}
               </el-tag>
-              <span v-if="detail.packageType >= 2 && detail.packageExpireAt" style="margin-left:8px;font-size:12px;color:#606266;">
-                有效期至：{{ detail.packageExpireAt }}
+            </el-descriptions-item>
+            <el-descriptions-item label="套餐开通时间">{{ fmtDay(detail.packageActivatedAt) }}</el-descriptions-item>
+            <el-descriptions-item label="套餐到期时间">{{ detail.packageExpireAt || '永久' }}</el-descriptions-item>
+            <el-descriptions-item label="审核通过时间">{{ fmtDay(detail.approvedAt) }}</el-descriptions-item>
+            <el-descriptions-item label="合作金额">
+              <span v-if="detail.cooperationAmount > 0" style="color:#17794a;">
+                ¥{{ Number(detail.cooperationAmount).toFixed(2) }}
               </span>
+              <span v-else style="color:#999;">--</span>
             </el-descriptions-item>
             <el-descriptions-item label="设备 BindId">
               <span v-if="detail.bindId" style="font-family:monospace;">{{ detail.bindId }}</span>
@@ -110,8 +116,8 @@
                       <span class="rec-content">{{ rec.content }}</span>
                       <el-image
                         v-if="rec.imageUrl"
-                        :src="rec.imageUrl"
-                        :preview-src-list="[rec.imageUrl]"
+                        :src="toFullUrl(rec.imageUrl)"
+                        :preview-src-list="[toFullUrl(rec.imageUrl)]"
                         class="rec-image"
                         fit="cover"
                         preview-teleported
@@ -160,6 +166,12 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Loading } from '@element-plus/icons-vue'
 import { getMerchantDetail, updateMerchant, toggleMerchant, getMerchantFollows, getFollowRecords } from '../../api'
+import { BASE_URL } from '../../utils/request'
+
+function toFullUrl(url) {
+  if (!url) return ''
+  return url.startsWith('http') ? url : BASE_URL + url
+}
 
 const route   = useRoute()
 const id      = route.params.id
@@ -209,6 +221,13 @@ function fmtDate(dt) {
   const d = new Date(dt)
   const pad = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function fmtDay(dt) {
+  if (!dt) return '--'
+  const d = new Date(dt)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`
 }
 
 // ── 基础信息 ────────────────────────────────────────────────
