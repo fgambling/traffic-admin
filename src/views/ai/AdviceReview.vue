@@ -7,6 +7,9 @@
     <!-- 搜索栏 -->
     <el-card shadow="never" style="margin-bottom:16px;">
       <el-form :model="query" inline>
+        <el-form-item label="商家名称">
+          <el-input v-model="query.merchantName" placeholder="搜索商家名称" clearable style="width:160px;" />
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.reviewStatus" placeholder="全部" clearable style="width:130px;">
             <el-option label="未操作"  :value="0" />
@@ -50,8 +53,10 @@
             <span class="content-preview">{{ row.content }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="feedback" label="反馈" width="70" align="center">
-          <template #default="{ row }">{{ ['—','👍','👎'][row.feedback ?? 0] }}</template>
+        <el-table-column prop="feedback" label="反馈" width="80" align="center">
+          <template #default="{ row }">
+            {{ ['—','👍','👎'][row.feedback ?? 0] }}<span v-if="row.feedbackNote" title="有备注">💬</span>
+          </template>
         </el-table-column>
         <el-table-column label="状态" width="105" align="center">
           <template #default="{ row }">
@@ -96,6 +101,10 @@
           </el-descriptions-item>
           <el-descriptions-item label="置信度">{{ current.confidence || '--' }}</el-descriptions-item>
           <el-descriptions-item label="用户反馈">{{ ['未反馈','👍 有用','👎 无用'][current.feedback ?? 0] }}</el-descriptions-item>
+          <el-descriptions-item label="反馈备注" :span="2">
+            <span v-if="current.feedbackNote" style="white-space:pre-wrap;">{{ current.feedbackNote }}</span>
+            <span v-else style="color:#bbb;">无</span>
+          </el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="statusTag(current.reviewStatus).type" size="small">
               {{ statusTag(current.reviewStatus).label }}
@@ -130,7 +139,7 @@ import { fmtDate } from '../../utils/format'
 const loading       = ref(false)
 const list          = ref([])
 const total         = ref(0)
-const query         = reactive({ reviewStatus: null, source: 2, adviceType: null, page: 1, size: 20 })
+const query         = reactive({ merchantName: '', reviewStatus: null, source: 2, adviceType: null, page: 1, size: 20 })
 const detailVisible = ref(false)
 const current       = ref(null)
 
@@ -165,7 +174,7 @@ async function load(page) {
 }
 
 function resetQuery() {
-  Object.assign(query, { reviewStatus: null, source: 2, adviceType: null, page: 1 })
+  Object.assign(query, { merchantName: '', reviewStatus: null, source: 2, adviceType: null, page: 1 })
   load()
 }
 

@@ -11,19 +11,7 @@
           <el-form :model="form" label-width="90px" v-loading="loading">
 
             <!-- Logo 配置 -->
-            <el-form-item label="Logo 类型">
-              <el-radio-group v-model="logoMode" @change="onLogoModeChange">
-                <el-radio value="emoji">Emoji 图标</el-radio>
-                <el-radio value="image">图片上传</el-radio>
-              </el-radio-group>
-            </el-form-item>
-
-            <el-form-item v-if="logoMode === 'emoji'" label="Emoji">
-              <el-input v-model="emojiVal" placeholder="如 📊" maxlength="4" style="width:120px;" />
-              <span class="emoji-preview">{{ emojiVal }}</span>
-            </el-form-item>
-
-            <el-form-item v-else label="Logo 图片">
+            <el-form-item label="Logo 图片">
               <div class="upload-area">
                 <img v-if="imageVal" :src="fullUrl(imageVal)" class="logo-preview-img" />
                 <el-upload
@@ -63,8 +51,8 @@
             <div class="preview-bg">
               <div class="preview-brand">
                 <div class="preview-icon">
-                  <img v-if="logoMode === 'image' && imageVal" :src="fullUrl(imageVal)" class="preview-logo-img" />
-                  <span v-else>{{ emojiVal || '📊' }}</span>
+                  <img v-if="imageVal" :src="fullUrl(imageVal)" class="preview-logo-img" />
+                  <span v-else>📊</span>
                 </div>
                 <div class="preview-title">{{ form.brandTitle || '智慧客流分析' }}</div>
                 <div class="preview-sub">{{ form.slogan || 'AI 驱动 · 精准洞察 · 智慧运营' }}</div>
@@ -92,8 +80,6 @@ const loading  = ref(false)
 const saving   = ref(false)
 const uploading = ref(false)
 
-const logoMode  = ref('emoji')   // 'emoji' | 'image'
-const emojiVal  = ref('📊')
 const imageVal  = ref('')        // 存 /uploads/xxx.png 路径
 
 const DEFAULTS = { brandTitle: '智慧客流分析', slogan: 'AI 驱动 · 精准洞察 · 智慧运营' }
@@ -103,12 +89,6 @@ function fullUrl(path) {
   if (!path) return ''
   if (path.startsWith('http')) return path
   return BASE_URL + path
-}
-
-function onLogoModeChange() {
-  // 切换模式时清掉另一侧
-  if (logoMode.value === 'emoji') imageVal.value = ''
-  else emojiVal.value = ''
 }
 
 function beforeUpload(file) {
@@ -141,20 +121,18 @@ async function load() {
     const data = await getAppearance()
     form.brandTitle = data.brandTitle || DEFAULTS.brandTitle
     form.slogan     = data.slogan     || DEFAULTS.slogan
-    const logo = data.logo || '📊'
+    const logo = data.logo || ''
     if (logo.startsWith('/uploads/') || logo.startsWith('http')) {
-      logoMode.value = 'image'
       imageVal.value = logo
     } else {
-      logoMode.value = 'emoji'
-      emojiVal.value = logo
+      imageVal.value = ''
     }
   } catch (_) {}
   finally { loading.value = false }
 }
 
 async function save() {
-  const logo = logoMode.value === 'image' ? (imageVal.value || '📊') : (emojiVal.value || '📊')
+  const logo = imageVal.value || ''
   saving.value = true
   try {
     await saveAppearance({ logo, brandTitle: form.brandTitle, slogan: form.slogan })
@@ -167,9 +145,7 @@ async function save() {
 }
 
 function reset() {
-  logoMode.value  = 'emoji'
-  emojiVal.value  = '📊'
-  imageVal.value  = ''
+  imageVal.value = ''
   Object.assign(form, DEFAULTS)
 }
 
@@ -182,12 +158,6 @@ onMounted(load)
   h2 { margin: 0; font-size: 20px; color: #1a1a2e; }
 }
 .form-tip { font-size: 12px; color: #909399; margin-top: 4px; }
-
-.emoji-preview {
-  font-size: 28px;
-  margin-left: 12px;
-  vertical-align: middle;
-}
 
 .upload-area {
   display: flex;

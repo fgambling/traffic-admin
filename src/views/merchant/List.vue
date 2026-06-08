@@ -334,6 +334,29 @@
           />
         </el-form-item>
         <el-form-item label="登录密码"><el-input v-model="createForm.password" type="password" show-password placeholder="留空默认 123456" /></el-form-item>
+        <el-divider content-position="left" style="margin:8px 0;">合作信息（选填）</el-divider>
+        <el-form-item label="所属业务员">
+          <el-select
+            v-model="createForm.salesmanId"
+            placeholder="不选则无所属业务员"
+            clearable
+            filterable
+            style="width:100%;"
+          >
+            <el-option
+              v-for="s in salesmanOptions"
+              :key="s.id"
+              :label="`${s.name}（${s.phone}）`"
+              :value="s.id"
+            />
+          </el-select>
+          <div style="font-size:12px;color:#909399;margin-top:4px;">选择后该商家将作为已合作商家显示在业务员端</div>
+        </el-form-item>
+        <el-form-item v-if="createForm.salesmanId" label="合作金额">
+          <el-input v-model="createForm.commission" placeholder="选填，元">
+            <template #append>元</template>
+          </el-input>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreate = false">取消</el-button>
@@ -563,7 +586,7 @@ import { Loading } from '@element-plus/icons-vue'
 import {
   getMerchantList, createMerchant, toggleMerchant, updateMerchant,
   getFollowList, getFollowDetail, getFollowRecords, approveFollow, rejectFollow,
-  getCommissionRules, getMerchantFollowers,
+  getCommissionRules, getMerchantFollowers, getSalesmanList,
   getPackageApplications, reviewPackageApplication, getAppPendingCount
 } from '../../api'
 import { BASE_URL } from '../../utils/request'
@@ -592,10 +615,20 @@ const query   = reactive({ name: '', status: null, packageType: null, page: 1, s
 
 const showCreate  = ref(false)
 const createSaving = ref(false)
-const createForm  = reactive({ name: '', licenseNo: '', contactPerson: '', contactPhone: '', address: '', packageType: 1, packageExpireAt: '', password: '' })
+const createForm  = reactive({ name: '', licenseNo: '', contactPerson: '', contactPhone: '', address: '', packageType: 1, packageExpireAt: '', password: '', salesmanId: null, commission: '' })
+const salesmanOptions = ref([])
+
+async function loadSalesmanOptions() {
+  if (salesmanOptions.value.length) return
+  try {
+    const data = await getSalesmanList({ status: 1, page: 1, size: 1000 })
+    salesmanOptions.value = data.list || []
+  } catch (_) {}
+}
 
 function openCreate() {
-  Object.assign(createForm, { name: '', licenseNo: '', contactPerson: '', contactPhone: '', address: '', packageType: 1, packageExpireAt: '', password: '' })
+  Object.assign(createForm, { name: '', licenseNo: '', contactPerson: '', contactPhone: '', address: '', packageType: 1, packageExpireAt: '', password: '', salesmanId: null, commission: '' })
+  loadSalesmanOptions()
   showCreate.value = true
 }
 
@@ -604,6 +637,9 @@ async function confirmCreate() {
   if (!createForm.contactPerson.trim()) { ElMessage.warning('请填写联系人'); return }
   if (!createForm.contactPhone.trim())  { ElMessage.warning('请填写联系电话'); return }
   if (createForm.packageType >= 2 && !createForm.packageExpireAt) { ElMessage.warning('请设置套餐有效期'); return }
+  if (createForm.commission && !/^\d+(\.\d{1,2})?$/.test(String(createForm.commission).trim())) {
+    ElMessage.warning('合作金额格式不正确'); return
+  }
   createSaving.value = true
   try {
     await createMerchant({
@@ -615,6 +651,8 @@ async function confirmCreate() {
       packageType:     createForm.packageType,
       packageExpireAt: createForm.packageType >= 2 ? createForm.packageExpireAt : null,
       password:        createForm.password || undefined,
+      salesmanId:      createForm.salesmanId || undefined,
+      commission:      createForm.salesmanId && createForm.commission ? String(createForm.commission).trim() : undefined,
     })
     ElMessage.success('商家已添加')
     showCreate.value = false
